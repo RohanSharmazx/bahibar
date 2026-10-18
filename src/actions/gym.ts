@@ -7,7 +7,9 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { addDays, format } from 'date-fns';
 import { DEFAULT_TRIAL_DAYS, DATE_FORMAT } from '@/lib/constants';
+import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
 import type { Gym, SoftwareSubscription } from '@/types';
+import crypto from 'crypto';
 
 export type GymActionState = {
   success?: boolean;
@@ -34,9 +36,51 @@ export async function createGymAction(
     };
   }
 
+  // Local Development Fallback Mode
+  if (isLocalPlaceholderMode()) {
+    const db = readLocalDb();
+    const gymId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const today = new Date();
+    const trialEnd = addDays(today, DEFAULT_TRIAL_DAYS);
+
+    const newGym: Gym = {
+      id: gymId,
+      name: parsed.data.name,
+      owner_name: parsed.data.owner_name,
+      contact_number: parsed.data.contact_number,
+      address: parsed.data.address || null,
+      created_at: now,
+      updated_at: now,
+    };
+
+    db.gyms.push(newGym);
+    db.gym_staff.push({
+      id: crypto.randomUUID(),
+      gym_id: gymId,
+      user_id: user.id,
+      role: 'owner',
+      created_at: now,
+    });
+
+    db.software_subscriptions.push({
+      id: crypto.randomUUID(),
+      gym_id: gymId,
+      plan_name: 'trial',
+      status: 'trial',
+      start_date: format(today, DATE_FORMAT.input),
+      end_date: format(trialEnd, DATE_FORMAT.input),
+      created_at: now,
+      updated_at: now,
+    });
+
+    writeLocalDb(db);
+    redirect('/dashboard');
+  }
+
+  // Cloud Supabase Mode
   const supabase = await createClient();
 
-  // 1. Insert gym
   const { data: gymData, error: gymError } = await supabase
     .from('gyms')
     .insert({
@@ -54,7 +98,6 @@ export async function createGymAction(
 
   const gymId = gymData.id;
 
-  // 2. Link user as owner in gym_staff
   const { error: staffError } = await supabase.from('gym_staff').insert({
     gym_id: gymId,
     user_id: user.id,
@@ -65,7 +108,6 @@ export async function createGymAction(
     return { error: 'Failed to assign owner role to gym.' };
   }
 
-  // 3. Provision trial software subscription
   const today = new Date();
   const trialEnd = addDays(today, DEFAULT_TRIAL_DAYS);
 
@@ -100,6 +142,22 @@ export async function updateGymAction(
       };
     }
 
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const gym = db.gyms.find((g) => g.id === gymId);
+      if (gym) {
+        gym.name = parsed.data.name;
+        gym.owner_name = parsed.data.owner_name;
+        gym.contact_number = parsed.data.contact_number;
+        gym.address = parsed.data.address || null;
+        gym.updated_at = new Date().toISOString();
+        writeLocalDb(db);
+      }
+      revalidatePath('/settings');
+      revalidatePath('/dashboard');
+      return { success: true };
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -132,9 +190,29 @@ export async function getCurrentGymData(): Promise<{
   const user = await getUser();
   if (!user) return { gym: null, subscription: null };
 
+  if (isLocalPlaceholderMode()) {
+    const db = readLocalDb();
+    const staff = db.gym_staff.find((s) => s.user_id === user.id);
+    if (!staff) {
+      return {
+        gym: null,
+        subscription: null,
+        userName: user.user_metadata?.full_name || 'Gym Owner',
+      };
+    }
+
+    const gym = db.gyms.find((g) => g.id === staff.gym_id) || null;
+    const subscription = db.software_subscriptions.find((s) => s.gym_id === staff.gym_id) || null;
+
+    return {
+      gym,
+      subscription,
+      userName: user.user_metadata?.full_name || gym?.owner_name || 'Gym Owner',
+    };
+  }
+
   const supabase = await createClient();
 
-  // Find staff record
   const { data: staff } = await supabase
     .from('gym_staff')
     .select('gym_id')

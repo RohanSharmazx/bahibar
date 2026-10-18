@@ -5,7 +5,9 @@ import { requireGymAccess } from '@/lib/supabase/auth-helpers';
 import { planSchema } from '@/lib/validations/plans';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
 import type { MembershipPlan } from '@/types';
+import crypto from 'crypto';
 
 export type PlanActionState = {
   success?: boolean;
@@ -35,6 +37,28 @@ export async function createPlanAction(
         error: 'Please correct the plan form errors.',
         fieldErrors: parsed.error.flatten().fieldErrors,
       };
+    }
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const now = new Date().toISOString();
+      const newPlan: MembershipPlan = {
+        id: crypto.randomUUID(),
+        gym_id: gymId,
+        name: parsed.data.name,
+        duration_value: parsed.data.duration_value,
+        duration_unit: parsed.data.duration_unit,
+        price: parsed.data.price,
+        description: parsed.data.description || null,
+        is_active: true,
+        created_at: now,
+        updated_at: now,
+      };
+      db.membership_plans.push(newPlan);
+      writeLocalDb(db);
+      revalidatePath('/plans');
+      revalidatePath('/members/new');
+      redirect('/plans');
     }
 
     const supabase = await createClient();
@@ -87,6 +111,22 @@ export async function updatePlanAction(
       };
     }
 
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const plan = db.membership_plans.find((p) => p.id === planId && p.gym_id === gymId);
+      if (plan) {
+        plan.name = parsed.data.name;
+        plan.duration_value = parsed.data.duration_value;
+        plan.duration_unit = parsed.data.duration_unit;
+        plan.price = parsed.data.price;
+        plan.description = parsed.data.description || null;
+        plan.updated_at = new Date().toISOString();
+        writeLocalDb(db);
+      }
+      revalidatePath('/plans');
+      redirect('/plans');
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -116,6 +156,19 @@ export async function updatePlanAction(
 export async function togglePlanActiveAction(planId: string, currentActive: boolean) {
   try {
     const { gymId } = await requireGymAccess();
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const plan = db.membership_plans.find((p) => p.id === planId && p.gym_id === gymId);
+      if (plan) {
+        plan.is_active = !currentActive;
+        plan.updated_at = new Date().toISOString();
+        writeLocalDb(db);
+      }
+      revalidatePath('/plans');
+      return { success: true };
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -136,6 +189,16 @@ export async function togglePlanActiveAction(planId: string, currentActive: bool
 export async function getPlansAction(onlyActive: boolean = false): Promise<MembershipPlan[]> {
   try {
     const { gymId } = await requireGymAccess();
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      let plans = db.membership_plans.filter((p) => p.gym_id === gymId);
+      if (onlyActive) {
+        plans = plans.filter((p) => p.is_active);
+      }
+      return plans.sort((a, b) => a.price - b.price);
+    }
+
     const supabase = await createClient();
 
     let query = supabase

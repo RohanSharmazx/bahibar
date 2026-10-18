@@ -6,7 +6,9 @@ import { memberSchema, addMemberSchema } from '@/lib/validations/members';
 import { calculateEndDate } from '@/lib/utils/dates';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { Member, MemberWithMembership, MembershipPlan } from '@/types';
+import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
+import type { Member, MemberWithMembership, MembershipPlan, MemberMembership, Payment } from '@/types';
+import crypto from 'crypto';
 
 export type MemberActionState = {
   success?: boolean;
@@ -47,9 +49,96 @@ export async function createMemberAction(
       };
     }
 
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const existing = db.members.find(
+        (m) => m.gym_id === gymId && m.mobile === parsed.data.mobile
+      );
+      if (existing) {
+        return { error: 'A member with this mobile number already exists in your gym.' };
+      }
+
+      const plan = db.membership_plans.find(
+        (p) => p.id === parsed.data.plan_id && p.gym_id === gymId
+      );
+      if (!plan) {
+        return { error: 'Selected plan was not found.' };
+      }
+
+      const memberId = crypto.randomUUID();
+      const membershipId = crypto.randomUUID();
+      const now = new Date().toISOString();
+
+      const newMember: Member = {
+        id: memberId,
+        gym_id: gymId,
+        full_name: parsed.data.full_name,
+        mobile: parsed.data.mobile,
+        email: parsed.data.email || null,
+        gender: (parsed.data.gender as any) || null,
+        date_of_birth: parsed.data.date_of_birth || null,
+        address: parsed.data.address || null,
+        emergency_contact: parsed.data.emergency_contact || null,
+        notes: parsed.data.notes || null,
+        is_archived: false,
+        created_at: now,
+        updated_at: now,
+      };
+
+      const endDate = calculateEndDate(
+        parsed.data.start_date,
+        plan.duration_value,
+        plan.duration_unit
+      );
+
+      const discountAmount = Math.max(0, plan.price - parsed.data.agreed_price);
+
+      const newMembership: MemberMembership = {
+        id: membershipId,
+        gym_id: gymId,
+        member_id: memberId,
+        plan_id: plan.id,
+        plan_name_snapshot: plan.name,
+        plan_price_snapshot: plan.price,
+        agreed_price: parsed.data.agreed_price,
+        discount_amount: discountAmount,
+        duration_value_snapshot: plan.duration_value,
+        duration_unit_snapshot: plan.duration_unit,
+        start_date: parsed.data.start_date,
+        end_date: endDate.toISOString().split('T')[0],
+        status: 'active',
+        created_at: now,
+        updated_at: now,
+      };
+
+      db.members.push(newMember);
+      db.member_memberships.push(newMembership);
+
+      if (parsed.data.payment_amount && parsed.data.payment_amount > 0 && parsed.data.payment_method) {
+        const newPayment: Payment = {
+          id: crypto.randomUUID(),
+          gym_id: gymId,
+          member_id: memberId,
+          membership_id: membershipId,
+          amount: parsed.data.payment_amount,
+          payment_method: parsed.data.payment_method as any,
+          payment_date: parsed.data.start_date,
+          transaction_reference: null,
+          notes: 'Initial enrollment payment',
+          created_at: now,
+        };
+        db.payments.push(newPayment);
+      }
+
+      writeLocalDb(db);
+      revalidatePath('/members');
+      revalidatePath('/dashboard');
+      redirect(`/members/${memberId}`);
+    }
+
+    // Cloud Supabase Mode
     const supabase = await createClient();
 
-    // 1. Fetch selected plan for snapshots
     const { data: plan, error: planError } = await supabase
       .from('membership_plans')
       .select('*')
@@ -61,7 +150,6 @@ export async function createMemberAction(
       return { error: 'Selected plan was not found or is invalid.' };
     }
 
-    // 2. Insert member
     const { data: member, error: memberError } = await supabase
       .from('members')
       .insert({
@@ -86,7 +174,6 @@ export async function createMemberAction(
       return { error: memberError?.message || 'Failed to save member.' };
     }
 
-    // 3. Calculate expiry date
     const endDate = calculateEndDate(
       parsed.data.start_date,
       plan.duration_value,
@@ -95,7 +182,6 @@ export async function createMemberAction(
 
     const discountAmount = Math.max(0, plan.price - parsed.data.agreed_price);
 
-    // 4. Insert membership period with snapshots
     const { data: membership, error: membershipError } = await supabase
       .from('member_memberships')
       .insert({
@@ -119,7 +205,6 @@ export async function createMemberAction(
       return { error: 'Member was created, but failed to assign membership period.' };
     }
 
-    // 5. If initial payment provided, record it
     if (parsed.data.payment_amount && parsed.data.payment_amount > 0 && parsed.data.payment_method) {
       await supabase.from('payments').insert({
         gym_id: gymId,
@@ -169,6 +254,26 @@ export async function updateMemberAction(
       };
     }
 
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const member = db.members.find((m) => m.id === memberId && m.gym_id === gymId);
+      if (member) {
+        member.full_name = parsed.data.full_name;
+        member.mobile = parsed.data.mobile;
+        member.email = parsed.data.email || null;
+        member.gender = (parsed.data.gender as any) || null;
+        member.date_of_birth = parsed.data.date_of_birth || null;
+        member.address = parsed.data.address || null;
+        member.emergency_contact = parsed.data.emergency_contact || null;
+        member.notes = parsed.data.notes || null;
+        member.updated_at = new Date().toISOString();
+        writeLocalDb(db);
+      }
+      revalidatePath(`/members/${memberId}`);
+      revalidatePath('/members');
+      redirect(`/members/${memberId}`);
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -202,6 +307,20 @@ export async function updateMemberAction(
 export async function archiveMemberAction(memberId: string) {
   try {
     const { gymId } = await requireGymAccess();
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const member = db.members.find((m) => m.id === memberId && m.gym_id === gymId);
+      if (member) {
+        member.is_archived = true;
+        member.updated_at = new Date().toISOString();
+        writeLocalDb(db);
+      }
+      revalidatePath('/members');
+      revalidatePath(`/members/${memberId}`);
+      return { success: true };
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -223,6 +342,20 @@ export async function archiveMemberAction(memberId: string) {
 export async function restoreMemberAction(memberId: string) {
   try {
     const { gymId } = await requireGymAccess();
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const member = db.members.find((m) => m.id === memberId && m.gym_id === gymId);
+      if (member) {
+        member.is_archived = false;
+        member.updated_at = new Date().toISOString();
+        writeLocalDb(db);
+      }
+      revalidatePath('/members');
+      revalidatePath(`/members/${memberId}`);
+      return { success: true };
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -247,6 +380,55 @@ export async function getMembersWithDetailsAction(options?: {
 }): Promise<MemberWithMembership[]> {
   try {
     const { gymId } = await requireGymAccess();
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      let members = db.members.filter((m) => m.gym_id === gymId);
+
+      if (options?.status === 'archived') {
+        members = members.filter((m) => m.is_archived);
+      } else {
+        members = members.filter((m) => !m.is_archived);
+      }
+
+      if (options?.search) {
+        const q = options.search.trim().toLowerCase();
+        members = members.filter(
+          (m) => m.full_name.toLowerCase().includes(q) || m.mobile.includes(q)
+        );
+      }
+
+      const results: MemberWithMembership[] = members.map((member) => {
+        const memberPeriods = db.member_memberships
+          .filter((m) => m.member_id === member.id)
+          .sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime());
+
+        const latestPeriod = memberPeriods[0] || null;
+        let totalPaid = 0;
+        const agreedPrice = latestPeriod ? Number(latestPeriod.agreed_price) : 0;
+
+        if (latestPeriod) {
+          const periodPayments = db.payments.filter((p) => p.membership_id === latestPeriod.id);
+          totalPaid = periodPayments.reduce((acc, p) => acc + Number(p.amount), 0);
+        }
+
+        const outstanding = Math.max(0, agreedPrice - totalPaid);
+
+        return {
+          ...member,
+          current_membership: latestPeriod,
+          total_paid: totalPaid,
+          outstanding_balance: outstanding,
+        };
+      });
+
+      if (options?.status === 'dues') {
+        return results.filter((m) => m.outstanding_balance > 0);
+      }
+
+      return results;
+    }
+
     const supabase = await createClient();
 
     let memberQuery = supabase
@@ -269,7 +451,6 @@ export async function getMembersWithDetailsAction(options?: {
     const { data: members, error } = await memberQuery;
     if (error || !members) return [];
 
-    // For each member, retrieve latest membership and total payments
     const memberIds = members.map((m) => m.id);
     if (memberIds.length === 0) return [];
 
@@ -286,7 +467,6 @@ export async function getMembersWithDetailsAction(options?: {
     ]);
 
     const results: MemberWithMembership[] = members.map((member) => {
-      // Find latest membership
       const memberPeriods = (memberships || []).filter((m) => m.member_id === member.id);
       const latestPeriod = memberPeriods[0] || null;
 
@@ -308,7 +488,6 @@ export async function getMembersWithDetailsAction(options?: {
       };
     });
 
-    // Apply status filter if specified
     if (options?.status === 'dues') {
       return results.filter((m) => m.outstanding_balance > 0);
     }

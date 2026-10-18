@@ -4,9 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 import { requireGymAccess } from '@/lib/supabase/auth-helpers';
 import { paymentSchema } from '@/lib/validations/payments';
 import { revalidatePath } from 'next/cache';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isToday } from 'date-fns';
 import { DATE_FORMAT } from '@/lib/constants';
+import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
 import type { Payment, PaymentWithMember } from '@/types';
+import crypto from 'crypto';
 
 export type PaymentActionState = {
   success?: boolean;
@@ -40,9 +42,54 @@ export async function recordPaymentAction(
       };
     }
 
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const membership = db.member_memberships.find(
+        (m) => m.id === parsed.data.membership_id && m.gym_id === gymId
+      );
+
+      if (!membership) {
+        return { error: 'Invalid membership period specified.' };
+      }
+
+      const existingPayments = db.payments.filter(
+        (p) => p.membership_id === parsed.data.membership_id
+      );
+      const totalPaidSoFar = existingPayments.reduce((acc, p) => acc + Number(p.amount), 0);
+      const agreed = Number(membership.agreed_price);
+      const outstanding = Math.max(0, agreed - totalPaidSoFar);
+
+      if (parsed.data.amount > outstanding + 0.01) {
+        return {
+          error: `Payment amount (₹${parsed.data.amount}) exceeds outstanding balance (₹${outstanding}).`,
+        };
+      }
+
+      const newPayment: Payment = {
+        id: crypto.randomUUID(),
+        gym_id: gymId,
+        member_id: memberId,
+        membership_id: parsed.data.membership_id,
+        amount: parsed.data.amount,
+        payment_method: parsed.data.payment_method as any,
+        payment_date: parsed.data.payment_date,
+        transaction_reference: parsed.data.transaction_reference || null,
+        notes: parsed.data.notes || null,
+        created_at: new Date().toISOString(),
+      };
+
+      db.payments.push(newPayment);
+      writeLocalDb(db);
+
+      revalidatePath(`/members/${memberId}`);
+      revalidatePath('/payments');
+      revalidatePath('/dashboard');
+      return { success: true };
+    }
+
+    // Cloud Supabase Mode
     const supabase = await createClient();
 
-    // 1. Verify membership belongs to this gym and fetch agreed price
     const { data: membership, error: memError } = await supabase
       .from('member_memberships')
       .select('agreed_price')
@@ -54,7 +101,6 @@ export async function recordPaymentAction(
       return { error: 'Invalid membership period specified.' };
     }
 
-    // 2. Calculate existing payments for this membership
     const { data: existingPayments } = await supabase
       .from('payments')
       .select('amount')
@@ -74,7 +120,6 @@ export async function recordPaymentAction(
       };
     }
 
-    // 3. Record payment transaction (immutable)
     const { error: insertError } = await supabase.from('payments').insert({
       gym_id: gymId,
       member_id: memberId,
@@ -102,6 +147,27 @@ export async function recordPaymentAction(
 export async function getPaymentsHistoryAction(memberId?: string): Promise<PaymentWithMember[]> {
   try {
     const { gymId } = await requireGymAccess();
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      let payments = db.payments.filter((p) => p.gym_id === gymId);
+      if (memberId) {
+        payments = payments.filter((p) => p.member_id === memberId);
+      }
+
+      return payments
+        .map((p) => {
+          const member = db.members.find((m) => m.id === p.member_id);
+          const membership = db.member_memberships.find((m) => m.id === p.membership_id);
+          return {
+            ...p,
+            member_name: member?.full_name || 'Member',
+            plan_name: membership?.plan_name_snapshot || 'Plan',
+          };
+        })
+        .sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
+    }
+
     const supabase = await createClient();
 
     let query = supabase
@@ -147,6 +213,26 @@ export async function getCollectionSummaryAction(): Promise<{
 }> {
   try {
     const { gymId } = await requireGymAccess();
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const gymPayments = db.payments.filter((p) => p.gym_id === gymId);
+      const now = new Date();
+      const todayStr = format(now, DATE_FORMAT.input);
+      const monthStart = format(startOfMonth(now), DATE_FORMAT.input);
+      const monthEnd = format(endOfMonth(now), DATE_FORMAT.input);
+
+      const todayTotal = gymPayments
+        .filter((p) => p.payment_date === todayStr)
+        .reduce((acc, p) => acc + Number(p.amount), 0);
+
+      const monthTotal = gymPayments
+        .filter((p) => p.payment_date >= monthStart && p.payment_date <= monthEnd)
+        .reduce((acc, p) => acc + Number(p.amount), 0);
+
+      return { today: todayTotal, thisMonth: monthTotal };
+    }
+
     const supabase = await createClient();
 
     const now = new Date();
