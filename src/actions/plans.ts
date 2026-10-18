@@ -218,3 +218,29 @@ export async function getPlansAction(onlyActive: boolean = false): Promise<Membe
     return [];
   }
 }
+
+export async function getPlanByIdAction(planId: string): Promise<MembershipPlan | null> {
+  try {
+    const { gymId } = await requireGymAccess();
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const plan = db.membership_plans.find((p) => p.id === planId && p.gym_id === gymId);
+      return plan || null;
+    }
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('membership_plans')
+      .select('*')
+      .eq('id', planId)
+      .eq('gym_id', gymId)
+      .single();
+
+    if (error || !data) return null;
+    return data as MembershipPlan;
+  } catch {
+    return null;
+  }
+}
+

@@ -1,7 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
-import { requireGymAccess } from '@/lib/supabase/auth-helpers';
 import { notFound } from 'next/navigation';
-import { updatePlanAction } from '@/actions/plans';
+import { updatePlanAction, getPlanByIdAction } from '@/actions/plans';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,17 +13,10 @@ export default async function EditPlanPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { gymId } = await requireGymAccess();
-  const supabase = await createClient();
 
-  const { data: plan, error } = await supabase
-    .from('membership_plans')
-    .select('*')
-    .eq('id', id)
-    .eq('gym_id', gymId)
-    .single();
+  const plan = await getPlanByIdAction(id);
 
-  if (error || !plan) {
+  if (!plan) {
     notFound();
   }
 

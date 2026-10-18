@@ -1,8 +1,6 @@
-import { createClient } from '@/lib/supabase/server';
-import { requireGymAccess } from '@/lib/supabase/auth-helpers';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { updateMemberAction } from '@/actions/members';
+import { updateMemberAction, getMemberByIdAction } from '@/actions/members';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,21 +14,12 @@ export default async function EditMemberPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { gymId } = await requireGymAccess();
-  const supabase = await createClient();
 
-  const { data: memberData, error } = await supabase
-    .from('members')
-    .select('*')
-    .eq('id', id)
-    .eq('gym_id', gymId)
-    .single();
+  const member = await getMemberByIdAction(id);
 
-  if (error || !memberData) {
+  if (!member) {
     notFound();
   }
-
-  const member = memberData as Member;
 
   async function handleUpdate(formData: FormData) {
     'use server';

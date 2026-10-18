@@ -497,3 +497,29 @@ export async function getMembersWithDetailsAction(options?: {
     return [];
   }
 }
+
+export async function getMemberByIdAction(memberId: string): Promise<Member | null> {
+  try {
+    const { gymId } = await requireGymAccess();
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+      const member = db.members.find((m) => m.id === memberId && m.gym_id === gymId);
+      return member || null;
+    }
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('members')
+      .select('*')
+      .eq('id', memberId)
+      .eq('gym_id', gymId)
+      .single();
+
+    if (error || !data) return null;
+    return data as Member;
+  } catch {
+    return null;
+  }
+}
+

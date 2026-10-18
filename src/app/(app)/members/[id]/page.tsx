@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireGymAccess } from '@/lib/supabase/auth-helpers';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getMemberByIdAction } from '@/actions/members';
 import { getPlansAction } from '@/actions/plans';
 import { getMemberMembershipsHistoryAction } from '@/actions/memberships';
 import { getPaymentsHistoryAction } from '@/actions/payments';
@@ -32,22 +33,13 @@ export default async function MemberDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { gymId } = await requireGymAccess();
-  const supabase = await createClient();
 
   // 1. Fetch Member
-  const { data: memberData, error: memberError } = await supabase
-    .from('members')
-    .select('*')
-    .eq('id', id)
-    .eq('gym_id', gymId)
-    .single();
+  const member = await getMemberByIdAction(id);
 
-  if (memberError || !memberData) {
+  if (!member) {
     notFound();
   }
-
-  const member = memberData as Member;
 
   // 2. Fetch all memberships history & payments & available plans
   const [memberships, payments, availablePlans] = await Promise.all([
