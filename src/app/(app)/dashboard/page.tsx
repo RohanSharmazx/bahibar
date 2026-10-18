@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getMembersWithDetailsAction } from '@/actions/members';
 import { getCollectionSummaryAction } from '@/actions/payments';
 import { formatCurrency, formatCurrencyCompact } from '@/lib/utils/currency';
-import { formatDate } from '@/lib/utils/dates';
+import { formatDate, isExpiringSoon } from '@/lib/utils/dates';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -28,12 +28,9 @@ export default async function DashboardPage() {
     (m) => m.current_membership?.status === 'active'
   ).length;
 
-  const now = new Date();
   const expiringSoonMembers = members.filter((m) => {
     if (!m.current_membership || m.current_membership.status !== 'active') return false;
-    const end = new Date(m.current_membership.end_date);
-    const diffDays = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDays >= 0 && diffDays <= 7;
+    return isExpiringSoon(m.current_membership.end_date, 7);
   });
 
   const expiredMembers = members.filter(
@@ -59,20 +56,20 @@ export default async function DashboardPage() {
             className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 text-sm font-semibold text-white shadow-xs hover:bg-sky-700 transition-colors"
           >
             <UserPlus className="h-4 w-4" />
-            Add Member
+            <span>Add Member</span>
           </Link>
           <Link
             href="/plans/new"
             className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
           >
             <CreditCard className="h-4 w-4" />
-            New Plan
+            <span>New Plan</span>
           </Link>
         </div>
       </div>
 
-      {/* Primary KPI Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Primary KPI Grid (adaptive 1 col on < 375px, 2 col on tablet, 4 col on desktop) */}
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="border-l-4 border-l-sky-500">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between text-slate-500">
@@ -81,7 +78,7 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{totalMembers}</div>
+            <div className="text-2xl sm:text-3xl font-bold text-slate-900">{totalMembers}</div>
             <p className="text-xs text-slate-500 mt-1">{activeMembers} active memberships</p>
           </CardContent>
         </Card>
@@ -94,7 +91,7 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{expiringSoonMembers.length}</div>
+            <div className="text-2xl sm:text-3xl font-bold text-slate-900">{expiringSoonMembers.length}</div>
             <p className="text-xs text-slate-500 mt-1">Need follow-up / renewal</p>
           </CardContent>
         </Card>
@@ -107,7 +104,7 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">
+            <div className="text-2xl sm:text-3xl font-bold text-emerald-600">
               {formatCurrencyCompact(collections.today)}
             </div>
             <p className="text-xs text-slate-500 mt-1">
@@ -124,7 +121,7 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-rose-600">
+            <div className="text-2xl sm:text-3xl font-bold text-rose-600">
               {formatCurrencyCompact(totalOutstanding)}
             </div>
             <p className="text-xs text-slate-500 mt-1">{membersWithDues.length} members with balance</p>

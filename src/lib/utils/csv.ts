@@ -68,3 +68,15 @@ export function downloadCsv(csvContent: string, filename: string): void {
   link.click();
   URL.revokeObjectURL(link.href);
 }
+
+/**
+ * Trigger a JSON file download in the browser.
+ */
+export function downloadJson(jsonContent: string, filename: string): void {
+  const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}

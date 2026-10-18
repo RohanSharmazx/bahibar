@@ -62,7 +62,7 @@ export default async function PaymentsPage() {
         </Card>
       </div>
 
-      {/* Payments History Table */}
+      {/* Payments History: Desktop Table + Mobile Cards */}
       <Card>
         <CardHeader className="border-b border-slate-100 pb-4">
           <CardTitle className="text-base">Transactions Record ({payments.length})</CardTitle>
@@ -74,52 +74,92 @@ export default async function PaymentsPage() {
               No payment transactions recorded yet.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-3.5">Date</th>
-                    <th className="px-6 py-3.5">Member</th>
-                    <th className="px-6 py-3.5">Plan</th>
-                    <th className="px-6 py-3.5">Method</th>
-                    <th className="px-6 py-3.5">Reference</th>
-                    <th className="px-6 py-3.5 text-right">Amount (₹)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {payments.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
-                        {formatDate(p.payment_date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+            <>
+              {/* Desktop Table View (md screens and up) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-600">
+                  <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-3.5">Date</th>
+                      <th className="px-6 py-3.5">Member</th>
+                      <th className="px-6 py-3.5">Plan</th>
+                      <th className="px-6 py-3.5">Method</th>
+                      <th className="px-6 py-3.5">Reference</th>
+                      <th className="px-6 py-3.5 text-right">Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {payments.map((p) => (
+                      <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
+                          {formatDate(p.payment_date)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Link
+                            href={`/members/${p.member_id}`}
+                            className="font-semibold text-slate-900 hover:text-sky-600 inline-flex items-center gap-1"
+                          >
+                            {p.member_name}
+                            <ArrowUpRight className="h-3.5 w-3.5 text-slate-400" />
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-slate-600">
+                          {p.plan_name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold uppercase text-slate-700">
+                            {p.payment_method}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-500 font-mono">
+                          {p.transaction_reference || '—'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right font-bold text-emerald-600">
+                          {formatCurrency(p.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Transaction Cards (< md screens) */}
+              <div className="md:hidden divide-y divide-slate-100 p-2">
+                {payments.map((p) => (
+                  <div key={p.id} className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
                         <Link
                           href={`/members/${p.member_id}`}
-                          className="font-semibold text-slate-900 hover:text-sky-600 inline-flex items-center gap-1"
+                          className="font-semibold text-sm text-slate-900 hover:text-sky-600 flex items-center gap-1"
                         >
                           {p.member_name}
                           <ArrowUpRight className="h-3 w-3 text-slate-400" />
                         </Link>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">
-                        {p.plan_name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold uppercase text-slate-700">
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {formatDate(p.payment_date)} • {p.plan_name}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-base font-bold text-emerald-600">
+                          {formatCurrency(p.amount)}
+                        </div>
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-700 mt-0.5">
                           {p.payment_method}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-500 font-mono">
-                        {p.transaction_reference || '—'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right font-bold text-emerald-600">
-                        {formatCurrency(p.amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </div>
+
+                    {(p.transaction_reference || p.notes) && (
+                      <div className="text-[11px] text-slate-500 bg-slate-50 rounded-md p-1.5 font-mono">
+                        {p.transaction_reference && <span>Ref: {p.transaction_reference} </span>}
+                        {p.notes && <span>• Note: {p.notes}</span>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

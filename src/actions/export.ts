@@ -203,3 +203,104 @@ export async function exportPaymentsCsvAction(): Promise<string> {
 
   return generateCsv(formatted, columns);
 }
+
+export async function exportPlansCsvAction(): Promise<string> {
+  const { gymId } = await requireGymAccess();
+
+  if (isLocalPlaceholderMode()) {
+    const db = readLocalDb();
+    const plans = db.membership_plans.filter((p) => p.gym_id === gymId);
+    const formatted = plans.map((p) => ({
+      name: p.name,
+      duration: `${p.duration_value} ${p.duration_unit}`,
+      price: p.price,
+      status: p.is_active ? 'Active' : 'Deactivated',
+      description: p.description || '',
+      created_at: p.created_at,
+    }));
+
+    const columns = [
+      { key: 'name' as const, header: 'Plan Name' },
+      { key: 'duration' as const, header: 'Duration' },
+      { key: 'price' as const, header: 'Price (₹)' },
+      { key: 'status' as const, header: 'Status' },
+      { key: 'description' as const, header: 'Description' },
+      { key: 'created_at' as const, header: 'Created Date' },
+    ];
+
+    return generateCsv(formatted, columns);
+  }
+
+  const supabase = await createClient();
+  const { data: plans, error } = await supabase
+    .from('membership_plans')
+    .select('*')
+    .eq('gym_id', gymId)
+    .order('created_at', { ascending: false });
+
+  if (error || !plans) throw new Error('Failed to fetch membership plans for export.');
+
+  const formatted = plans.map((p) => ({
+    name: p.name,
+    duration: `${p.duration_value} ${p.duration_unit}`,
+    price: p.price,
+    status: p.is_active ? 'Active' : 'Deactivated',
+    description: p.description || '',
+    created_at: p.created_at,
+  }));
+
+  const columns = [
+    { key: 'name' as const, header: 'Plan Name' },
+    { key: 'duration' as const, header: 'Duration' },
+    { key: 'price' as const, header: 'Price (₹)' },
+    { key: 'status' as const, header: 'Status' },
+    { key: 'description' as const, header: 'Description' },
+    { key: 'created_at' as const, header: 'Created Date' },
+  ];
+
+  return generateCsv(formatted, columns);
+}
+
+export async function exportFullBackupAction(): Promise<string> {
+  const { gymId } = await requireGymAccess();
+
+  if (isLocalPlaceholderMode()) {
+    const db = readLocalDb();
+    const backup = {
+      app: 'GymManager',
+      version: '1.0.0',
+      exported_at: new Date().toISOString(),
+      gym: db.gyms.find((g) => g.id === gymId) || null,
+      plans: db.membership_plans.filter((p) => p.gym_id === gymId),
+      members: db.members.filter((m) => m.gym_id === gymId),
+      memberships: db.member_memberships.filter((m) => m.gym_id === gymId),
+      payments: db.payments.filter((p) => p.gym_id === gymId),
+      subscription: db.software_subscriptions.find((s) => s.gym_id === gymId) || null,
+    };
+    return JSON.stringify(backup, null, 2);
+  }
+
+  const supabase = await createClient();
+  const [gymRes, plansRes, membersRes, membershipsRes, paymentsRes, subRes] = await Promise.all([
+    supabase.from('gyms').select('*').eq('id', gymId).single(),
+    supabase.from('membership_plans').select('*').eq('gym_id', gymId),
+    supabase.from('members').select('*').eq('gym_id', gymId),
+    supabase.from('member_memberships').select('*').eq('gym_id', gymId),
+    supabase.from('payments').select('*').eq('gym_id', gymId),
+    supabase.from('software_subscriptions').select('*').eq('gym_id', gymId).single(),
+  ]);
+
+  const backup = {
+    app: 'GymManager',
+    version: '1.0.0',
+    exported_at: new Date().toISOString(),
+    gym: gymRes.data || null,
+    plans: plansRes.data || [],
+    members: membersRes.data || [],
+    memberships: membershipsRes.data || [],
+    payments: paymentsRes.data || [],
+    subscription: subRes.data || null,
+  };
+
+  return JSON.stringify(backup, null, 2);
+}

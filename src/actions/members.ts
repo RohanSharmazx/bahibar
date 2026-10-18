@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireGymAccess } from '@/lib/supabase/auth-helpers';
 import { memberSchema, addMemberSchema } from '@/lib/validations/members';
-import { calculateEndDate } from '@/lib/utils/dates';
+import { calculateEndDate, formatDateToISO } from '@/lib/utils/dates';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
@@ -114,7 +114,7 @@ export async function createMemberAction(
         duration_value_snapshot: plan.duration_value,
         duration_unit_snapshot: plan.duration_unit,
         start_date: parsed.data.start_date,
-        end_date: endDate.toISOString().split('T')[0],
+        end_date: formatDateToISO(endDate),
         status: 'active',
         created_at: now,
         updated_at: now,
@@ -204,7 +204,7 @@ export async function createMemberAction(
         duration_value_snapshot: plan.duration_value,
         duration_unit_snapshot: plan.duration_unit,
         start_date: parsed.data.start_date,
-        end_date: endDate.toISOString().split('T')[0],
+        end_date: formatDateToISO(endDate),
         status: 'active',
       })
       .select('id')

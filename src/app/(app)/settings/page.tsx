@@ -1,20 +1,14 @@
-import { getCurrentGymData, updateGymAction } from '@/actions/gym';
+import { getCurrentGymData } from '@/actions/gym';
+import { SettingsForm } from '@/components/settings/SettingsForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils/dates';
-import { Building2, Shield, Calendar, Sparkles } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 export default async function SettingsPage() {
   const { gym, subscription } = await getCurrentGymData();
 
   if (!gym) return null;
-
-  async function handleGymUpdate(formData: FormData) {
-    'use server';
-    await updateGymAction(null, formData);
-  }
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -25,63 +19,8 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      {/* Gym Profile Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Gym Business Profile</CardTitle>
-          <CardDescription>
-            These details appear on your member receipts and reports.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={handleGymUpdate} className="space-y-4">
-            <Input
-              label="Gym Name"
-              id="name"
-              name="name"
-              required
-              defaultValue={gym.name}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Owner / Contact Person"
-                id="owner_name"
-                name="owner_name"
-                required
-                defaultValue={gym.owner_name}
-              />
-              <Input
-                label="Official Contact Number"
-                id="contact_number"
-                name="contact_number"
-                type="tel"
-                required
-                defaultValue={gym.contact_number}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="address" className="block text-sm font-medium text-slate-700">
-                Gym Location Address
-              </label>
-              <textarea
-                id="address"
-                name="address"
-                rows={3}
-                defaultValue={gym.address || ''}
-                className="flex w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-600/20"
-              />
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <Button type="submit">
-                Save Profile Changes
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      {/* Gym Profile Form with Feedback */}
+      <SettingsForm gym={gym} />
 
       {/* Software Subscription Info */}
       <Card>

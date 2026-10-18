@@ -4,6 +4,8 @@ import {
   calculateRenewalStartDate,
   formatDate,
   formatDateLong,
+  formatDateToISO,
+  parseDateOnly,
   isExpiringSoon,
   isExpired,
   getMembershipStatusFromDate,
@@ -11,39 +13,55 @@ import {
 import { addDays } from 'date-fns';
 
 describe('Date Calculations & Rules', () => {
-  it('calculates 3 calendar months correctly (normal case)', () => {
-    // 17 Oct 2026 + 3 months -> 16 Jan 2027
-    const start = new Date(2026, 9, 17); // Month is 0-indexed: 9 = October
+  it('calculates 3 calendar months correctly (18 Oct 2026 -> 18 Jan 2027 anniversary date)', () => {
+    const start = new Date(2026, 9, 18); // 18 October 2026
     const end = calculateEndDate(start, 3, 'months');
     expect(end.getFullYear()).toBe(2027);
     expect(end.getMonth()).toBe(0); // January
-    expect(end.getDate()).toBe(16);
+    expect(end.getDate()).toBe(18);
   });
 
-  it('handles month-end clamping for Jan 31 + 1 month in non-leap year', () => {
-    // 31 Jan 2027 + 1 month -> clamped to 27 Feb 2027 (since last day of 1-month period ending before 28 Feb)
+  it('handles month-end clamping for Jan 31 + 1 month in non-leap year (2027)', () => {
     const start = new Date(2027, 0, 31);
     const end = calculateEndDate(start, 1, 'months');
     expect(end.getFullYear()).toBe(2027);
     expect(end.getMonth()).toBe(1); // February
-    expect(end.getDate()).toBe(27);
+    expect(end.getDate()).toBe(28);
   });
 
   it('handles leap year correctly for Jan 31 + 1 month in leap year (2028)', () => {
-    // 31 Jan 2028 + 1 month -> Feb 29 - 1 day = 28 Feb 2028
     const start = new Date(2028, 0, 31);
     const end = calculateEndDate(start, 1, 'months');
     expect(end.getFullYear()).toBe(2028);
     expect(end.getMonth()).toBe(1); // February
-    expect(end.getDate()).toBe(28);
+    expect(end.getDate()).toBe(29);
+  });
+
+  it('handles month-end clamping from 31-day month to 30-day month (Mar 31 -> Apr 30)', () => {
+    const start = new Date(2026, 2, 31); // 31 March 2026
+    const end = calculateEndDate(start, 1, 'months');
+    expect(end.getFullYear()).toBe(2026);
+    expect(end.getMonth()).toBe(3); // April
+    expect(end.getDate()).toBe(30);
   });
 
   it('calculates duration in days correctly', () => {
-    // 10 days starting 1 Oct -> ends 10 Oct (inclusive)
     const start = new Date(2026, 9, 1);
     const end = calculateEndDate(start, 10, 'days');
-    expect(end.getDate()).toBe(10);
+    expect(end.getDate()).toBe(11);
     expect(end.getMonth()).toBe(9);
+  });
+
+  it('formats Date to local YYYY-MM-DD ISO string without UTC timezone shift', () => {
+    const date = new Date(2027, 0, 18); // 18 Jan 2027 local midnight
+    expect(formatDateToISO(date)).toBe('2027-01-18');
+  });
+
+  it('parses YYYY-MM-DD strings safely in local midnight without timezone loss', () => {
+    const parsed = parseDateOnly('2026-10-18');
+    expect(parsed.getFullYear()).toBe(2026);
+    expect(parsed.getMonth()).toBe(9); // October
+    expect(parsed.getDate()).toBe(18);
   });
 
   it('calculates renewal start date for active membership (starts day after expiry)', () => {
@@ -63,13 +81,13 @@ describe('Date Calculations & Rules', () => {
   });
 
   it('formats dates in DD/MM/YYYY format', () => {
-    const date = new Date(2026, 9, 17);
-    expect(formatDate(date)).toBe('17/10/2026');
+    const date = new Date(2026, 9, 18);
+    expect(formatDate(date)).toBe('18/10/2026');
   });
 
   it('formats dates in long format', () => {
-    const date = new Date(2026, 9, 17);
-    expect(formatDateLong(date)).toBe('17 October 2026');
+    const date = new Date(2026, 9, 18);
+    expect(formatDateLong(date)).toBe('18 October 2026');
   });
 
   it('correctly identifies expiring soon status', () => {
