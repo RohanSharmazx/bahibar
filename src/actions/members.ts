@@ -43,19 +43,28 @@ export async function createMemberAction(
     const parsed = addMemberSchema.safeParse(rawData);
 
     if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const errorList = Object.entries(fieldErrors)
+        .map(([field, msgs]) => `${field.replace('_', ' ')}: ${(msgs || []).join(', ')}`)
+        .join(' | ');
+
       return {
-        error: 'Please correct the member registration errors.',
-        fieldErrors: parsed.error.flatten().fieldErrors,
+        error: errorList || 'Please correct the member registration errors.',
+        fieldErrors,
       };
     }
 
     if (isLocalPlaceholderMode()) {
       const db = readLocalDb();
+      const cleanMobile = parsed.data.mobile.replace(/\D/g, '');
       const existing = db.members.find(
-        (m) => m.gym_id === gymId && m.mobile === parsed.data.mobile
+        (m) => m.gym_id === gymId && m.mobile.replace(/\D/g, '') === cleanMobile
       );
       if (existing) {
-        return { error: 'A member with this mobile number already exists in your gym.' };
+        return {
+          error: `A member with this mobile number already exists: ${existing.full_name} (${existing.mobile}). Please enter a unique mobile number or renew their membership from their profile.`,
+          fieldErrors: { mobile: ['Mobile number already registered for ' + existing.full_name] },
+        };
       }
 
       const plan = db.membership_plans.find(

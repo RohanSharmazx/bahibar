@@ -3,42 +3,52 @@ import { z } from 'zod';
 export const memberSchema = z.object({
   full_name: z
     .string()
+    .trim()
     .min(1, 'Full name is required')
     .min(2, 'Name must be at least 2 characters')
     .max(100, 'Name must be less than 100 characters'),
   mobile: z
     .string()
+    .trim()
     .min(1, 'Mobile number is required')
-    .min(10, 'Mobile number must be at least 10 digits')
-    .max(15, 'Mobile number must be less than 15 digits')
-    .regex(/^[+]?[0-9\s-]+$/, 'Please enter a valid mobile number'),
+    .refine((val) => {
+      const digits = val.replace(/\D/g, '');
+      return digits.length >= 10 && digits.length <= 15;
+    }, 'Mobile number must contain at least 10 digits'),
   email: z
     .string()
-    .email('Please enter a valid email')
+    .trim()
+    .email('Please enter a valid email address')
     .optional()
+    .nullable()
     .or(z.literal('')),
   gender: z
     .enum(['male', 'female', 'other'])
     .optional()
+    .nullable()
     .or(z.literal('')),
   date_of_birth: z
     .string()
     .optional()
+    .nullable()
     .or(z.literal('')),
   address: z
     .string()
     .max(500, 'Address must be less than 500 characters')
     .optional()
+    .nullable()
     .or(z.literal('')),
   emergency_contact: z
     .string()
     .max(100, 'Emergency contact must be less than 100 characters')
     .optional()
+    .nullable()
     .or(z.literal('')),
   notes: z
     .string()
     .max(1000, 'Notes must be less than 1000 characters')
     .optional()
+    .nullable()
     .or(z.literal('')),
 });
 
@@ -58,7 +68,9 @@ export const addMemberSchema = memberSchema.extend({
     .optional(),
   payment_method: z
     .enum(['cash', 'upi', 'card', 'other'])
-    .optional(),
+    .optional()
+    .nullable()
+    .or(z.literal('')),
 });
 
 export type MemberInput = z.infer<typeof memberSchema>;

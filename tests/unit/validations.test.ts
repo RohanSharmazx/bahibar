@@ -73,6 +73,25 @@ describe('Validation Schemas (Zod)', () => {
     expect(valid.success).toBe(true);
   });
 
+  it('validates add member schema with empty optional fields and formatted phone', () => {
+    const valid = addMemberSchema.safeParse({
+      full_name: 'Amit Patel',
+      mobile: '+91 98765 43211',
+      email: '',
+      gender: '',
+      date_of_birth: '',
+      address: '',
+      emergency_contact: '',
+      notes: '',
+      plan_id: 'plan-uuid-456',
+      start_date: '2026-10-18',
+      agreed_price: 1500,
+      payment_amount: 0,
+      payment_method: '',
+    });
+    expect(valid.success).toBe(true);
+  });
+
   it('validates payment schema requires positive amount', () => {
     const valid = paymentSchema.safeParse({
       membership_id: 'mem-uuid-123',

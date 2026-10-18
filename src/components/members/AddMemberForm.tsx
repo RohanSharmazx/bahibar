@@ -24,6 +24,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
   const [paymentAmount, setPaymentAmount] = useState<number>(plans[0]?.price || 0);
   const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [isPending, startTransition] = useTransition();
 
   // Find selected plan details
@@ -53,6 +54,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
 
     const formData = new FormData(e.currentTarget);
     formData.set('plan_id', selectedPlanId);
@@ -65,6 +67,9 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
       const res = await createMemberAction(null, formData);
       if (res?.error) {
         setError(res.error);
+        if (res.fieldErrors) {
+          setFieldErrors(res.fieldErrors);
+        }
       }
     });
   };
@@ -100,6 +105,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 name="full_name"
                 required
                 placeholder="e.g. Rahul Sharma"
+                error={fieldErrors.full_name?.[0]}
               />
               <Input
                 label="Mobile Number"
@@ -108,7 +114,8 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 type="tel"
                 required
                 placeholder="e.g. 9876543210"
-                helperText="Must be unique per member"
+                helperText="Must be 10 to 15 digits and unique per member"
+                error={fieldErrors.mobile?.[0]}
               />
             </div>
 
@@ -119,11 +126,13 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 name="email"
                 type="email"
                 placeholder="member@gmail.com"
+                error={fieldErrors.email?.[0]}
               />
               <Select
                 label="Gender"
                 id="gender"
                 name="gender"
+                error={fieldErrors.gender?.[0]}
                 options={[
                   { value: '', label: 'Select gender...' },
                   { value: 'male', label: 'Male' },
@@ -136,6 +145,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 id="date_of_birth"
                 name="date_of_birth"
                 type="date"
+                error={fieldErrors.date_of_birth?.[0]}
               />
             </div>
 
@@ -145,13 +155,31 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 id="emergency_contact"
                 name="emergency_contact"
                 placeholder="Parent/Spouse name & phone"
+                error={fieldErrors.emergency_contact?.[0]}
               />
               <Input
                 label="Address / Area (Optional)"
                 id="address"
                 name="address"
                 placeholder="e.g. Sector 14, Main Road"
+                error={fieldErrors.address?.[0]}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="notes" className="block text-sm font-medium text-slate-700">
+                Notes (Optional)
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                rows={2}
+                placeholder="Health notes, trainer preferences, locker number..."
+                className="flex w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-600/20"
+              />
+              {fieldErrors.notes?.[0] && (
+                <p className="text-xs font-medium text-rose-600">{fieldErrors.notes[0]}</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -192,6 +220,9 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                         </option>
                       ))}
                     </select>
+                    {fieldErrors.plan_id?.[0] && (
+                      <p className="text-xs font-medium text-rose-600">{fieldErrors.plan_id[0]}</p>
+                    )}
                   </div>
 
                   <Input
@@ -201,6 +232,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
+                    error={fieldErrors.start_date?.[0]}
                   />
                 </div>
 
@@ -235,6 +267,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                     min="0"
                     required
                     value={agreedPrice}
+                    error={fieldErrors.agreed_price?.[0]}
                     onChange={(e) => {
                       const val = Number(e.target.value);
                       setAgreedPrice(val);
@@ -270,6 +303,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 min="0"
                 max={agreedPrice}
                 value={paymentAmount}
+                error={fieldErrors.payment_amount?.[0]}
                 onChange={(e) => setPaymentAmount(Number(e.target.value))}
                 helperText={`Outstanding Balance: ${formatCurrency(Math.max(0, agreedPrice - paymentAmount))}`}
               />
@@ -279,6 +313,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 id="payment_method"
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
+                error={fieldErrors.payment_method?.[0]}
                 options={[
                   { value: 'cash', label: 'Cash' },
                   { value: 'upi', label: 'UPI (GPay / PhonePe / Paytm)' },
