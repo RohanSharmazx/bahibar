@@ -5,11 +5,11 @@ export const paymentSchema = z.object({
     .string()
     .min(1, 'Membership is required'),
   amount: z
-    .number({ required_error: 'Amount is required', invalid_type_error: 'Amount must be a number' })
+    .number()
     .positive('Amount must be greater than zero')
     .max(999999.99, 'Amount is too large'),
   payment_method: z
-    .enum(['cash', 'upi', 'card', 'other'], { required_error: 'Payment method is required' }),
+    .enum(['cash', 'upi', 'card', 'other']),
   payment_date: z
     .string()
     .min(1, 'Payment date is required'),
@@ -33,10 +33,10 @@ export const renewalSchema = z.object({
     .string()
     .min(1, 'Start date is required'),
   agreed_price: z
-    .number({ required_error: 'Price is required', invalid_type_error: 'Price must be a number' })
+    .number()
     .min(0, 'Price cannot be negative'),
   payment_amount: z
-    .number({ invalid_type_error: 'Payment must be a number' })
+    .number()
     .min(0, 'Payment cannot be negative')
     .optional(),
   payment_method: z

@@ -50,10 +50,10 @@ export const addMemberSchema = memberSchema.extend({
     .string()
     .min(1, 'Start date is required'),
   agreed_price: z
-    .number({ required_error: 'Price is required', invalid_type_error: 'Price must be a number' })
+    .number()
     .min(0, 'Price cannot be negative'),
   payment_amount: z
-    .number({ invalid_type_error: 'Payment must be a number' })
+    .number()
     .min(0, 'Payment cannot be negative')
     .optional(),
   payment_method: z
