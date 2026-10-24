@@ -1,0 +1,37 @@
+name: 💡 Feature Request
+description: Propose a new feature, improvement, or workflow for BahiBar
+title: "[Feature]: "
+labels: ["enhancement", "discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We welcome feature proposals from gym owners, managers, and developers!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a gym operating problem?
+      description: A clear and concise description of the friction point.
+      placeholder: e.g. "I'm always frustrated when members want to pay partially via cash and partially via UPI."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: Any alternative solutions or workarounds you've used so far.
+    validations:
+      required: false
+  - type: checkboxes
+    id: contributor
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be interested in submitting a pull request for this feature.

@@ -1,0 +1,54 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior in BahiBar
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! Please ensure you do NOT include sensitive member details, real phone numbers, passwords, or live API keys.
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: e.g. Clicking "Add Member" when phone number has 10 digits does not submit.
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Deployment Environment
+      options:
+        - Free Hosted Pilot (bahibar.com)
+        - Self-Hosted (Supabase + Next.js)
+        - Local Development (Zero-Config .local-db.json)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can maintainers reproduce this issue?
+      placeholder: |
+        1. Go to '/members'
+        2. Click 'Add Member'
+        3. Fill in name and plan
+        4. See error...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Device & Browser Context
+      description: Operating System, browser version, screen size (e.g., Android Chrome, iOS Safari, Desktop Firefox).
+    validations:
+      required: false

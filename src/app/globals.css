@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --primary: #087FDB;
+  --primary-hover: #0669b6;
+  --primary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --ring: #087FDB;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+
+  /* BahiBar Brand Tokens */
+  --bahibar-navy: #101F33;
+  --bahibar-blue: #087FDB;
+  --bahibar-cyan: #12BBDD;
+  --bahibar-white: #FFFFFF;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Devanagari", "Devanagari Sangam MN", "Mukta", sans-serif;
+}
+
+/* Devanagari typography tuning when Hindi is selected */
+html[lang="hi"] body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans Devanagari", "Devanagari Sangam MN", "Mukta", "Segoe UI", sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Ensure touch targets meet 44px minimum for mobile usability */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Lightweight interaction utilities */
+.tap-feedback {
+  transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease;
+}
+.tap-feedback:active {
+  transform: scale(0.98);
+}
+
+.tab-transition {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+/* Accessibility: respect user preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+    size: auto;
+  }
+  
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  /* Unhide printable receipt and all its descendants */
+  #printable-receipt, #printable-receipt * {
+    visibility: visible;
+  }
+
+  #printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure modal overlays or fixed wrappers do not obscure printing */
+  .fixed {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+}
