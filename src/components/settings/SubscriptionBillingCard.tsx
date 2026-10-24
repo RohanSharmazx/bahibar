@@ -242,7 +242,7 @@ export function SubscriptionBillingCard({
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold">
               <a
-                href="https://github.com/your-username/bahibar"
+                href="https://github.com/RohanSharmazx/bahibar"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-900 hover:underline"
@@ -354,7 +354,7 @@ export function SubscriptionBillingCard({
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200/80 text-xs text-slate-600">
               <span>Looking to report a bug or request a feature?</span>
               <a
-                href="https://github.com/your-username/bahibar/issues"
+                href="https://github.com/RohanSharmazx/bahibar/issues"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold transition-colors"

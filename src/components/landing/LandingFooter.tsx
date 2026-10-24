@@ -29,7 +29,7 @@ export function LandingFooter() {
               Sign In
             </Link>
             <a
-              href="https://github.com"
+              href="https://github.com/RohanSharmazx/bahibar"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-[#12BBDD] transition-colors py-2 min-h-[44px] inline-flex items-center"

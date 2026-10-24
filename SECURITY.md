@@ -7,7 +7,7 @@ The security and privacy of gym member records, phone numbers, and payment ledge
 ### How to Report
 
 Please submit your vulnerability report privately by:
-- Creating a [GitHub Private Security Advisory](https://github.com/bahibar/bahibar/security/advisories/new) (preferred), OR
+- Creating a [GitHub Private Security Advisory](https://github.com/RohanSharmazx/bahibar/security/advisories/new) (preferred), OR
 - Emailing: `security@bahibar.com`
 
 Please include:

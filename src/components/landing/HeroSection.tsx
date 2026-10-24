@@ -51,7 +51,7 @@ export function HeroSection() {
               </a>
 
               <a
-                href="https://github.com"
+                href="https://github.com/RohanSharmazx/bahibar"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-100/70 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-200/70 transition-all cursor-pointer min-h-[48px] tap-feedback"

@@ -18,7 +18,7 @@ All contributors are expected to uphold our [Code of Conduct](CODE_OF_CONDUCT.md
 
 1. **Fork and Clone the Repository**:
    ```bash
-   git clone https://github.com/your-username/bahibar.git
+   git clone https://github.com/RohanSharmazx/bahibar.git
    cd bahibar
    ```
 
@@ -75,4 +75,4 @@ npm run lint
 
 ## Community & Questions
 
-Have ideas or questions? Feel free to open a [GitHub Discussion](https://github.com/bahibar/bahibar/discussions) or submit a feature proposal!
+Have ideas or questions? Feel free to open a [GitHub Discussion](https://github.com/RohanSharmazx/bahibar/discussions) or submit a feature proposal!

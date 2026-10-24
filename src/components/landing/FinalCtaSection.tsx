@@ -41,7 +41,7 @@ export function FinalCtaSection() {
           </Link>
 
           <a
-            href="https://github.com"
+            href="https://github.com/RohanSharmazx/bahibar"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-semibold text-white hover:bg-white/10 active:bg-white/15 transition-all cursor-pointer min-h-[48px] tap-feedback"

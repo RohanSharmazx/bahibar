@@ -3,7 +3,7 @@
 > **Modern digital gym register and member fee ledger for independent fitness clubs.**  
 > Free, open-source, mobile-first, and designed specifically for neighborhood gym owners.
 
-[![Tests](https://img.shields.io/badge/tests-136%20passed-emerald)](https://github.com/bahibar/bahibar)
+[![Tests](https://img.shields.io/badge/tests-136%20passed-emerald)](https://github.com/RohanSharmazx/bahibar)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-16.4.2-black)](https://nextjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase%20RLS-336791)](https://supabase.com)
@@ -84,7 +84,7 @@ BahiBar includes a built-in JSON local storage fallback engine (`.local-db.json`
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/bahibar/bahibar.git
+   git clone https://github.com/RohanSharmazx/bahibar.git
    cd bahibar
    ```
 
@@ -171,7 +171,7 @@ Test Files  16 passed (16)
 
 ## 🔒 Security & Responsible Disclosure
 
-Security vulnerabilities should be reported privately to `security@bahibar.com` or via [GitHub Security Advisories](https://github.com/bahibar/bahibar/security/advisories/new).  
+Security vulnerabilities should be reported privately to `security@bahibar.com` or via [GitHub Security Advisories](https://github.com/RohanSharmazx/bahibar/security/advisories/new).  
 Please read our [Security Policy](SECURITY.md) for details.
 
 ---
