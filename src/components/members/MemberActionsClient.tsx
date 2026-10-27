@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { recordPaymentAction } from '@/actions/payments';
 import { renewMembershipAction } from '@/actions/memberships';
 import { archiveMemberAction, restoreMemberAction } from '@/actions/members';
-import { calculateEndDate, calculateRenewalStartDate, formatDate, getTodayISO } from '@/lib/utils/dates';
-import { formatCurrency } from '@/lib/utils/currency';
+import { calculateEndDate, calculateRenewalStartDate, formatDate, formatDateToISO, getTodayISO } from '@/lib/utils/dates';
+import { formatCurrency, sanitizeCurrencyInput } from '@/lib/utils/currency';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ export function MemberActionsClient({
   outstandingBalance,
   availablePlans,
 }: MemberActionsClientProps) {
+  const router = useRouter();
   // Modal states
   const [isRenewOpen, setIsRenewOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -41,12 +43,16 @@ export function MemberActionsClient({
   
   // Calculate default renewal start date (if active -> starts day after current end_date; if expired -> today)
   const defaultRenewalStart = currentMembership
-    ? calculateRenewalStartDate(currentMembership.end_date).toISOString().split('T')[0]
+    ? formatDateToISO(calculateRenewalStartDate(currentMembership.end_date))
     : getTodayISO();
 
   const [renewStartDate, setRenewStartDate] = useState(defaultRenewalStart);
-  const [renewAgreedPrice, setRenewAgreedPrice] = useState(defaultRenewalPlan?.price || 0);
-  const [renewPaymentAmount, setRenewPaymentAmount] = useState(defaultRenewalPlan?.price || 0);
+  const [renewAgreedPrice, setRenewAgreedPrice] = useState(
+    defaultRenewalPlan ? String(defaultRenewalPlan.price) : ''
+  );
+  const [renewPaymentAmount, setRenewPaymentAmount] = useState(
+    defaultRenewalPlan ? String(defaultRenewalPlan.price) : ''
+  );
   const [renewPaymentMethod, setRenewPaymentMethod] = useState('cash');
 
   // Renewal calculated end date
@@ -62,22 +68,51 @@ export function MemberActionsClient({
   }
 
   // Payment form states
-  const [payAmount, setPayAmount] = useState<number>(outstandingBalance);
+  const [payAmount, setPayAmount] = useState<string>(String(outstandingBalance));
   const [payMethod, setPayMethod] = useState<string>('cash');
   const [payDate, setPayDate] = useState<string>(getTodayISO());
   const [payRef, setPayRef] = useState<string>('');
   const [payNotes, setPayNotes] = useState<string>('');
 
+  const openRenewalModal = () => {
+    setError(null);
+    const plan = availablePlans[0];
+    setRenewPlanId(plan?.id || '');
+    const defaultStart = currentMembership
+      ? formatDateToISO(calculateRenewalStartDate(currentMembership.end_date))
+      : getTodayISO();
+    setRenewStartDate(defaultStart);
+    setRenewAgreedPrice(plan ? String(plan.price) : '');
+    setRenewPaymentAmount(plan ? String(plan.price) : '');
+    setRenewPaymentMethod('cash');
+    setIsRenewOpen(true);
+  };
+
+  const openPaymentModal = () => {
+    setError(null);
+    setPayAmount(String(outstandingBalance));
+    setPayMethod('cash');
+    setPayDate(getTodayISO());
+    setPayRef('');
+    setPayNotes('');
+    setIsPaymentOpen(true);
+  };
+
   const handleRenewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPending) return;
     setError(null);
+
+    const numAgreed = renewAgreedPrice === '' ? 0 : parseFloat(renewAgreedPrice);
+    const numPay = renewPaymentAmount === '' ? 0 : parseFloat(renewPaymentAmount);
 
     const formData = new FormData();
     formData.set('plan_id', renewPlanId);
     formData.set('start_date', renewStartDate);
-    formData.set('agreed_price', String(renewAgreedPrice));
-    formData.set('payment_amount', String(renewPaymentAmount));
+    formData.set('agreed_price', String(numAgreed));
+    formData.set('payment_amount', String(numPay));
     formData.set('payment_method', renewPaymentMethod);
+    formData.set('payment_date', getTodayISO());
 
     startTransition(async () => {
       const res = await renewMembershipAction(memberId, null, formData);
@@ -85,19 +120,23 @@ export function MemberActionsClient({
         setError(res.error);
       } else {
         setIsRenewOpen(false);
+        router.refresh();
       }
     });
   };
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPending) return;
     setError(null);
 
     if (!currentMembership) return;
 
+    const numPay = payAmount === '' ? 0 : parseFloat(payAmount);
+
     const formData = new FormData();
     formData.set('membership_id', currentMembership.id);
-    formData.set('amount', String(payAmount));
+    formData.set('amount', String(numPay));
     formData.set('payment_method', payMethod);
     formData.set('payment_date', payDate);
     formData.set('transaction_reference', payRef);
@@ -109,6 +148,7 @@ export function MemberActionsClient({
         setError(res.error);
       } else {
         setIsPaymentOpen(false);
+        router.refresh();
       }
     });
   };
@@ -121,6 +161,7 @@ export function MemberActionsClient({
         } else {
           await archiveMemberAction(memberId);
         }
+        router.refresh();
       });
     }
   };
@@ -129,10 +170,8 @@ export function MemberActionsClient({
     <>
       <div className="flex flex-wrap items-center gap-2">
         <Button
-          onClick={() => {
-            setError(null);
-            setIsRenewOpen(true);
-          }}
+          onClick={openRenewalModal}
+          disabled={isPending}
           className="gap-2"
         >
           <RefreshCw className="h-4 w-4" />
@@ -142,11 +181,8 @@ export function MemberActionsClient({
         {outstandingBalance > 0 && (
           <Button
             variant="success"
-            onClick={() => {
-              setError(null);
-              setPayAmount(outstandingBalance);
-              setIsPaymentOpen(true);
-            }}
+            onClick={openPaymentModal}
+            disabled={isPending}
             className="gap-2"
           >
             <IndianRupee className="h-4 w-4" />
@@ -198,8 +234,9 @@ export function MemberActionsClient({
                 setRenewPlanId(e.target.value);
                 const p = availablePlans.find((plan) => plan.id === e.target.value);
                 if (p) {
-                  setRenewAgreedPrice(p.price);
-                  setRenewPaymentAmount(p.price);
+                  const priceStr = String(p.price);
+                  setRenewAgreedPrice(priceStr);
+                  setRenewPaymentAmount(priceStr);
                 }
               }}
               className="flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-600/20"
@@ -236,23 +273,31 @@ export function MemberActionsClient({
 
           <Input
             label="Agreed Price (₹ INR)"
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
             required
             value={renewAgreedPrice}
-            onChange={(e) => setRenewAgreedPrice(Number(e.target.value))}
+            onChange={(e) => {
+              const sanitized = sanitizeCurrencyInput(e.target.value);
+              setRenewAgreedPrice(sanitized);
+              const numVal = sanitized === '' ? 0 : parseFloat(sanitized);
+              const numPay = renewPaymentAmount === '' ? 0 : parseFloat(renewPaymentAmount);
+              if (numPay > numVal) {
+                setRenewPaymentAmount(sanitized);
+              }
+            }}
           />
 
           <div className="grid grid-cols-2 gap-3 pt-1">
             <Input
               label="Payment Amount (₹)"
-              type="number"
-              step="0.01"
-              min="0"
-              max={renewAgreedPrice}
+              type="text"
+              inputMode="decimal"
               value={renewPaymentAmount}
-              onChange={(e) => setRenewPaymentAmount(Number(e.target.value))}
+              onChange={(e) => {
+                const sanitized = sanitizeCurrencyInput(e.target.value);
+                setRenewPaymentAmount(sanitized);
+              }}
             />
             <Select
               label="Payment Method"
@@ -296,13 +341,11 @@ export function MemberActionsClient({
         <form onSubmit={handlePaymentSubmit} className="space-y-4">
           <Input
             label="Amount Paid (₹ INR)"
-            type="number"
-            step="0.01"
-            min="1"
-            max={outstandingBalance}
+            type="text"
+            inputMode="decimal"
             required
             value={payAmount}
-            onChange={(e) => setPayAmount(Number(e.target.value))}
+            onChange={(e) => setPayAmount(sanitizeCurrencyInput(e.target.value))}
             helperText={`Maximum payable: ${formatCurrency(outstandingBalance)}`}
           />
 

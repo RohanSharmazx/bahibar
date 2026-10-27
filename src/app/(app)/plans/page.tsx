@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getPlansAction, togglePlanActiveAction } from '@/actions/plans';
+import { getPlansAction, togglePlanActiveFormAction } from '@/actions/plans';
 import { formatCurrency } from '@/lib/utils/currency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -89,12 +89,9 @@ export default async function PlansPage() {
                     Edit Price/Details
                   </Link>
 
-                  <form
-                    action={async () => {
-                      'use server';
-                      await togglePlanActiveAction(plan.id, plan.is_active);
-                    }}
-                  >
+                  <form action={togglePlanActiveFormAction}>
+                    <input type="hidden" name="plan_id" value={plan.id} />
+                    <input type="hidden" name="current_active" value={String(plan.is_active)} />
                     <button
                       type="submit"
                       className={`text-xs font-medium px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${

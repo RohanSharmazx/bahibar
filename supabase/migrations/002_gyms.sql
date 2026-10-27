@@ -52,9 +52,16 @@ CREATE POLICY "Users can view own staff entries"
   ON gym_staff FOR SELECT
   USING (user_id = auth.uid());
 
+-- Only allow initial owner registration on newly created gyms (with no existing staff)
+-- or subsequent staff additions by existing gym owners
 CREATE POLICY "Users can insert own staff entries"
   ON gym_staff FOR INSERT
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (
+    user_id = auth.uid() AND (
+      NOT EXISTS (SELECT 1 FROM gym_staff existing WHERE existing.gym_id = gym_staff.gym_id)
+      OR gym_id IN (SELECT user_gym_ids())
+    )
+  );
 
 -- Indexes
 CREATE INDEX idx_gym_staff_user_id ON gym_staff(user_id);

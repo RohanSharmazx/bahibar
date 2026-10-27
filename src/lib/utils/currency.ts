@@ -36,3 +36,36 @@ export function parseCurrencyInput(value: string): number {
   const parsed = parseFloat(cleaned);
   return isNaN(parsed) ? 0 : parsed;
 }
+
+/**
+ * Sanitize currency input string to prevent leading zeroes while allowing decimals and empty input.
+ * Examples:
+ * - "01000" → "1000"
+ * - "0050" → "50"
+ * - "0" → "0"
+ * - "0.50" → "0.50"
+ * - "" → ""
+ * - "1000" → "1000"
+ */
+export function sanitizeCurrencyInput(value: string): string {
+  if (!value) return '';
+
+  // Remove any non-digit, non-period characters
+  let cleaned = value.replace(/[^\d.]/g, '');
+
+  // Keep only the first decimal point
+  const parts = cleaned.split('.');
+  if (parts.length > 2) {
+    cleaned = parts[0] + '.' + parts.slice(1).join('');
+  }
+
+  // If starts with multiple zeroes or zero followed by a digit (not dot), strip leading zeroes
+  if (cleaned.length > 1 && cleaned.startsWith('0') && cleaned[1] !== '.') {
+    cleaned = cleaned.replace(/^0+/, '');
+    if (cleaned === '' || cleaned.startsWith('.')) {
+      cleaned = '0' + cleaned;
+    }
+  }
+
+  return cleaned;
+}

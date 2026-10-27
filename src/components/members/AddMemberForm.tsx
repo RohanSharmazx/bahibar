@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { createMemberAction } from '@/actions/members';
 import { calculateEndDate, formatDate, getTodayISO } from '@/lib/utils/dates';
-import { formatCurrency } from '@/lib/utils/currency';
+import { formatCurrency, sanitizeCurrencyInput } from '@/lib/utils/currency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -20,8 +20,12 @@ interface AddMemberFormProps {
 export function AddMemberForm({ plans }: AddMemberFormProps) {
   const [selectedPlanId, setSelectedPlanId] = useState<string>(plans[0]?.id || '');
   const [startDate, setStartDate] = useState<string>(getTodayISO());
-  const [agreedPrice, setAgreedPrice] = useState<number>(plans[0]?.price || 0);
-  const [paymentAmount, setPaymentAmount] = useState<number>(plans[0]?.price || 0);
+  const [agreedPrice, setAgreedPrice] = useState<string>(
+    plans[0]?.price !== undefined ? String(plans[0].price) : ''
+  );
+  const [paymentAmount, setPaymentAmount] = useState<string>(
+    plans[0]?.price !== undefined ? String(plans[0].price) : ''
+  );
   const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -46,8 +50,9 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
     setSelectedPlanId(planId);
     const plan = plans.find((p) => p.id === planId);
     if (plan) {
-      setAgreedPrice(plan.price);
-      setPaymentAmount(plan.price);
+      const priceStr = String(plan.price);
+      setAgreedPrice(priceStr);
+      setPaymentAmount(priceStr);
     }
   };
 
@@ -56,11 +61,14 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
     setError(null);
     setFieldErrors({});
 
+    const numAgreed = agreedPrice === '' ? 0 : parseFloat(agreedPrice);
+    const numPay = paymentAmount === '' ? 0 : parseFloat(paymentAmount);
+
     const formData = new FormData(e.currentTarget);
     formData.set('plan_id', selectedPlanId);
     formData.set('start_date', startDate);
-    formData.set('agreed_price', String(agreedPrice));
-    formData.set('payment_amount', String(paymentAmount));
+    formData.set('agreed_price', String(numAgreed));
+    formData.set('payment_amount', String(numPay));
     formData.set('payment_method', paymentMethod);
 
     startTransition(async () => {
@@ -262,20 +270,23 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                   <Input
                     label="Agreed Price (₹ INR)"
                     id="agreed_price"
-                    type="number"
-                    step="0.01"
-                    min="0"
+                    type="text"
+                    inputMode="decimal"
                     required
                     value={agreedPrice}
                     error={fieldErrors.agreed_price?.[0]}
                     onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setAgreedPrice(val);
-                      if (paymentAmount > val) setPaymentAmount(val);
+                      const sanitized = sanitizeCurrencyInput(e.target.value);
+                      setAgreedPrice(sanitized);
+                      const numVal = sanitized === '' ? 0 : parseFloat(sanitized);
+                      const numPay = paymentAmount === '' ? 0 : parseFloat(paymentAmount);
+                      if (numPay > numVal) {
+                        setPaymentAmount(sanitized);
+                      }
                     }}
                     helperText={
-                      currentPlan && agreedPrice < currentPlan.price
-                        ? `Discount applied: ${formatCurrency(currentPlan.price - agreedPrice)}`
+                      currentPlan && agreedPrice !== '' && parseFloat(agreedPrice) < currentPlan.price
+                        ? `Discount applied: ${formatCurrency(currentPlan.price - parseFloat(agreedPrice))}`
                         : undefined
                     }
                   />
@@ -298,14 +309,21 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
               <Input
                 label="Amount Paid Now (₹ INR)"
                 id="payment_amount"
-                type="number"
-                step="0.01"
-                min="0"
-                max={agreedPrice}
+                type="text"
+                inputMode="decimal"
                 value={paymentAmount}
                 error={fieldErrors.payment_amount?.[0]}
-                onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                helperText={`Outstanding Balance: ${formatCurrency(Math.max(0, agreedPrice - paymentAmount))}`}
+                onChange={(e) => {
+                  const sanitized = sanitizeCurrencyInput(e.target.value);
+                  setPaymentAmount(sanitized);
+                }}
+                helperText={`Outstanding Balance: ${formatCurrency(
+                  Math.max(
+                    0,
+                    (agreedPrice === '' ? 0 : parseFloat(agreedPrice)) -
+                      (paymentAmount === '' ? 0 : parseFloat(paymentAmount))
+                  )
+                )}`}
               />
 
               <Select

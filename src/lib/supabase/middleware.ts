@@ -11,8 +11,16 @@ export async function updateSession(request: NextRequest) {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const isPlaceholder = url.includes('placeholder') || key.includes('placeholder') || !url.startsWith('https://');
 
-  const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+  if (request.nextUrl.pathname.startsWith('/_next') || request.nextUrl.pathname.startsWith('/api')) {
+    return supabaseResponse;
+  }
+
+  const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/auth/callback', '/privacy', '/terms'];
   const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+
+  // Routes that authenticated users should not access (redirected to dashboard)
+  const authEntryRoutes = ['/login', '/register', '/forgot-password'];
+  const isAuthEntryRoute = authEntryRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
   // Local Development Mode Check (Zero Network Overhead)
   if (isPlaceholder) {
@@ -25,7 +33,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    if (hasUser && isPublicRoute) {
+    if (hasUser && isAuthEntryRoute) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = '/dashboard';
       return NextResponse.redirect(redirectUrl);
@@ -68,7 +76,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && isPublicRoute) {
+  if (user && isAuthEntryRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/dashboard';
     return NextResponse.redirect(redirectUrl);

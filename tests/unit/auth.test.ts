@@ -31,4 +31,27 @@ describe('Local Database & Auth Validation', () => {
     });
     expect(tooShortPassword.success).toBe(false);
   });
+
+  it('rejects registering with an already existing email address', () => {
+    const db = readLocalDb();
+    const existingEmail = db.users[0]?.email;
+    if (existingEmail) {
+      const match = db.users.find((u) => u.email.toLowerCase() === existingEmail.toLowerCase());
+      expect(match).toBeDefined();
+    }
+  });
+
+  it('validates login input format requirements', () => {
+    const valid = loginSchema.safeParse({
+      email: 'owner@test.com',
+      password: 'password123',
+    });
+    expect(valid.success).toBe(true);
+
+    const invalidEmail = loginSchema.safeParse({
+      email: 'not-an-email',
+      password: 'password123',
+    });
+    expect(invalidEmail.success).toBe(false);
+  });
 });

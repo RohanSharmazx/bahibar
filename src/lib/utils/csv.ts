@@ -62,11 +62,19 @@ export function generateCsv<T extends Record<string, unknown>>(
  */
 export function downloadCsv(csvContent: string, filename: string): void {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
+  link.href = url;
   link.download = filename;
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(link.href);
+  setTimeout(() => {
+    if (document.body.contains(link)) {
+      document.body.removeChild(link);
+    }
+    URL.revokeObjectURL(url);
+  }, 2000);
 }
 
 /**
@@ -74,9 +82,17 @@ export function downloadCsv(csvContent: string, filename: string): void {
  */
 export function downloadJson(jsonContent: string, filename: string): void {
   const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
+  link.href = url;
   link.download = filename;
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(link.href);
+  setTimeout(() => {
+    if (document.body.contains(link)) {
+      document.body.removeChild(link);
+    }
+    URL.revokeObjectURL(url);
+  }, 2000);
 }

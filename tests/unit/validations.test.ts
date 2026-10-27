@@ -109,4 +109,33 @@ describe('Validation Schemas (Zod)', () => {
     });
     expect(zeroAmount.success).toBe(false);
   });
+
+  it('rejects upfront payment in addMemberSchema if payment_amount > 0 but payment_method is omitted', () => {
+    const invalid = addMemberSchema.safeParse({
+      full_name: 'Rahul Sharma',
+      mobile: '9876543210',
+      plan_id: 'plan-uuid-123',
+      start_date: '2026-10-17',
+      agreed_price: 2000,
+      payment_amount: 1000,
+      payment_method: '',
+    });
+    expect(invalid.success).toBe(false);
+    if (!invalid.success) {
+      expect(invalid.error.issues[0].message).toContain('Payment method is required');
+    }
+  });
+
+  it('rejects upfront payment in renewalSchema if payment_amount > 0 but payment_method is omitted', () => {
+    const invalid = renewalSchema.safeParse({
+      plan_id: 'plan-uuid-123',
+      start_date: '2026-10-17',
+      agreed_price: 2000,
+      payment_amount: 500,
+    });
+    expect(invalid.success).toBe(false);
+    if (!invalid.success) {
+      expect(invalid.error.issues[0].message).toContain('Payment method is required');
+    }
+  });
 });

@@ -1,13 +1,14 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { requireGymAccess } from '@/lib/supabase/auth-helpers';
+import { requireGymAccess, requireActiveSubscription } from '@/lib/supabase/auth-helpers';
 import { paymentSchema } from '@/lib/validations/payments';
 import { revalidatePath } from 'next/cache';
 import { format, startOfMonth, endOfMonth, isToday } from 'date-fns';
 import { DATE_FORMAT } from '@/lib/constants';
 import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
 import type { Payment, PaymentWithMember } from '@/types';
+import { comparePaymentsDesc } from '@/lib/utils/memberships';
 import crypto from 'crypto';
 
 export type PaymentActionState = {
@@ -23,6 +24,7 @@ export async function recordPaymentAction(
 ): Promise<PaymentActionState> {
   try {
     const { gymId } = await requireGymAccess();
+    await requireActiveSubscription(gymId);
 
     const rawData = {
       membership_id: formData.get('membership_id'),
@@ -44,12 +46,20 @@ export async function recordPaymentAction(
 
     if (isLocalPlaceholderMode()) {
       const db = readLocalDb();
+      const member = db.members.find((m) => m.id === memberId && m.gym_id === gymId);
+      if (!member) {
+        return { error: 'Member not found or does not belong to your gym.' };
+      }
+
       const membership = db.member_memberships.find(
-        (m) => m.id === parsed.data.membership_id && m.gym_id === gymId
+        (m) =>
+          m.id === parsed.data.membership_id &&
+          m.gym_id === gymId &&
+          m.member_id === memberId
       );
 
       if (!membership) {
-        return { error: 'Invalid membership period specified.' };
+        return { error: 'Invalid membership period specified for this member.' };
       }
 
       const existingPayments = db.payments.filter(
@@ -63,6 +73,19 @@ export async function recordPaymentAction(
         return {
           error: `Payment amount (₹${parsed.data.amount}) exceeds outstanding balance (₹${outstanding}).`,
         };
+      }
+
+      // Check for rapid duplicate submission (within 3 seconds)
+      const recentDuplicatePayment = db.payments.find(
+        (p) =>
+          p.member_id === memberId &&
+          p.membership_id === parsed.data.membership_id &&
+          Number(p.amount) === parsed.data.amount &&
+          p.payment_method === parsed.data.payment_method &&
+          Date.now() - new Date(p.created_at).getTime() < 3000
+      );
+      if (recentDuplicatePayment) {
+        return { success: true };
       }
 
       const newPayment: Payment = {
@@ -82,6 +105,7 @@ export async function recordPaymentAction(
       writeLocalDb(db);
 
       revalidatePath(`/members/${memberId}`);
+      revalidatePath('/members');
       revalidatePath('/payments');
       revalidatePath('/dashboard');
       return { success: true };
@@ -90,15 +114,27 @@ export async function recordPaymentAction(
     // Cloud Supabase Mode
     const supabase = await createClient();
 
+    const { data: member, error: memberError } = await supabase
+      .from('members')
+      .select('id')
+      .eq('id', memberId)
+      .eq('gym_id', gymId)
+      .single();
+
+    if (memberError || !member) {
+      return { error: 'Member not found or does not belong to your gym.' };
+    }
+
     const { data: membership, error: memError } = await supabase
       .from('member_memberships')
       .select('agreed_price')
       .eq('id', parsed.data.membership_id)
+      .eq('member_id', memberId)
       .eq('gym_id', gymId)
       .single();
 
     if (memError || !membership) {
-      return { error: 'Invalid membership period specified.' };
+      return { error: 'Invalid membership period specified for this member.' };
     }
 
     const { data: existingPayments } = await supabase
@@ -120,6 +156,23 @@ export async function recordPaymentAction(
       };
     }
 
+    // Check for rapid duplicate submission (within 3 seconds)
+    const threeSecondsAgo = new Date(Date.now() - 3000).toISOString();
+    const { data: recentDuplicatePayment } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('gym_id', gymId)
+      .eq('member_id', memberId)
+      .eq('membership_id', parsed.data.membership_id)
+      .eq('amount', parsed.data.amount)
+      .eq('payment_method', parsed.data.payment_method)
+      .gte('created_at', threeSecondsAgo)
+      .maybeSingle();
+
+    if (recentDuplicatePayment) {
+      return { success: true };
+    }
+
     const { error: insertError } = await supabase.from('payments').insert({
       gym_id: gymId,
       member_id: memberId,
@@ -136,6 +189,7 @@ export async function recordPaymentAction(
     }
 
     revalidatePath(`/members/${memberId}`);
+    revalidatePath('/members');
     revalidatePath('/payments');
     revalidatePath('/dashboard');
     return { success: true };
@@ -159,13 +213,24 @@ export async function getPaymentsHistoryAction(memberId?: string): Promise<Payme
         .map((p) => {
           const member = db.members.find((m) => m.id === p.member_id);
           const membership = db.member_memberships.find((m) => m.id === p.membership_id);
+          const membershipPayments = db.payments.filter((item) => item.membership_id === p.membership_id);
+          const totalPaid = membershipPayments.reduce((acc, item) => acc + Number(item.amount), 0);
+          const agreed = Number(membership?.agreed_price || 0);
+          const outstanding = Math.max(0, agreed - totalPaid);
+
           return {
             ...p,
             member_name: member?.full_name || 'Member',
             plan_name: membership?.plan_name_snapshot || 'Plan',
+            member_mobile: member?.mobile || null,
+            member_email: member?.email || null,
+            agreed_price: agreed,
+            start_date: membership?.start_date,
+            end_date: membership?.end_date,
+            outstanding_balance: outstanding,
           };
         })
-        .sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
+        .sort(comparePaymentsDesc);
     }
 
     const supabase = await createClient();
@@ -174,12 +239,13 @@ export async function getPaymentsHistoryAction(memberId?: string): Promise<Payme
       .from('payments')
       .select(`
         *,
-        members!inner(full_name),
-        member_memberships!inner(plan_name_snapshot)
+        members(full_name, mobile, email),
+        member_memberships(plan_name_snapshot, agreed_price, start_date, end_date)
       `)
       .eq('gym_id', gymId)
       .order('payment_date', { ascending: false })
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false });
 
     if (memberId) {
       query = query.eq('member_id', memberId);
@@ -188,20 +254,51 @@ export async function getPaymentsHistoryAction(memberId?: string): Promise<Payme
     const { data, error } = await query;
     if (error || !data) return [];
 
-    return data.map((item: any) => ({
-      id: item.id,
-      gym_id: item.gym_id,
-      member_id: item.member_id,
-      membership_id: item.membership_id,
-      amount: Number(item.amount),
-      payment_method: item.payment_method,
-      payment_date: item.payment_date,
-      transaction_reference: item.transaction_reference,
-      notes: item.notes,
-      created_at: item.created_at,
-      member_name: item.members?.full_name || 'Member',
-      plan_name: item.member_memberships?.plan_name_snapshot || 'Plan',
-    }));
+    const membershipIds = Array.from(
+      new Set(data.map((item: any) => item.membership_id).filter(Boolean))
+    );
+    const { data: allMembershipPayments } =
+      membershipIds.length > 0
+        ? await supabase
+            .from('payments')
+            .select('membership_id, amount')
+            .in('membership_id', membershipIds)
+        : { data: [] };
+
+    const paymentsByMembership = new Map<string, number>();
+    for (const p of allMembershipPayments || []) {
+      const current = paymentsByMembership.get(p.membership_id) || 0;
+      paymentsByMembership.set(p.membership_id, current + Number(p.amount));
+    }
+
+    return data
+      .map((item: any) => {
+        const agreed = Number(item.member_memberships?.agreed_price || 0);
+        const totalPaid = paymentsByMembership.get(item.membership_id) || Number(item.amount);
+        const outstanding = Math.max(0, agreed - totalPaid);
+
+        return {
+          id: item.id,
+          gym_id: item.gym_id,
+          member_id: item.member_id,
+          membership_id: item.membership_id,
+          amount: Number(item.amount),
+          payment_method: item.payment_method,
+          payment_date: item.payment_date,
+          transaction_reference: item.transaction_reference,
+          notes: item.notes,
+          created_at: item.created_at,
+          member_name: item.members?.full_name || 'Member',
+          plan_name: item.member_memberships?.plan_name_snapshot || 'Plan',
+          member_mobile: item.members?.mobile || null,
+          member_email: item.members?.email || null,
+          agreed_price: agreed,
+          start_date: item.member_memberships?.start_date,
+          end_date: item.member_memberships?.end_date,
+          outstanding_balance: outstanding,
+        };
+      })
+      .sort(comparePaymentsDesc);
   } catch {
     return [];
   }

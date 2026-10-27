@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { CheckCircle2, Save } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/context';
 import type { Gym } from '@/types';
 
 interface SettingsFormProps {
@@ -16,27 +17,30 @@ interface SettingsFormProps {
 const initialState: GymActionState = {};
 
 export function SettingsForm({ gym }: SettingsFormProps) {
+  const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(updateGymAction, initialState);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gym Business Profile</CardTitle>
+        <CardTitle>{t.settings.gymProfileTitle}</CardTitle>
         <CardDescription>
-          These details appear on your member receipts, reports, and header.
+          {t.settings.gymProfileDesc}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {state.success && (
           <div className="mb-5 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800 flex items-center gap-3">
             <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-            <span className="font-medium">Gym business profile updated successfully.</span>
+            <span className="font-medium">
+              {t.common.save} — {t.settings.saveChanges}
+            </span>
           </div>
         )}
 
         {state.error && (
           <div className="mb-5">
-            <Alert variant="danger" title="Update Error">
+            <Alert variant="danger" title={t.common.error}>
               {state.error}
             </Alert>
           </div>
@@ -44,7 +48,7 @@ export function SettingsForm({ gym }: SettingsFormProps) {
 
         <form action={formAction} className="space-y-4">
           <Input
-            label="Gym Name"
+            label={t.settings.gymName}
             id="name"
             name="name"
             required
@@ -55,7 +59,7 @@ export function SettingsForm({ gym }: SettingsFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Owner / Contact Person"
+              label={t.settings.ownerName}
               id="owner_name"
               name="owner_name"
               required
@@ -64,7 +68,7 @@ export function SettingsForm({ gym }: SettingsFormProps) {
               placeholder="e.g. Rahul Sharma"
             />
             <Input
-              label="Official Contact Number"
+              label={t.settings.contactNumber}
               id="contact_number"
               name="contact_number"
               type="tel"
@@ -78,7 +82,7 @@ export function SettingsForm({ gym }: SettingsFormProps) {
 
           <div className="space-y-1.5">
             <label htmlFor="address" className="block text-sm font-medium text-slate-700">
-              Gym Location Address (Optional)
+              {t.settings.gymAddress}
             </label>
             <textarea
               id="address"
@@ -94,9 +98,9 @@ export function SettingsForm({ gym }: SettingsFormProps) {
           </div>
 
           <div className="pt-2 flex justify-end">
-            <Button type="submit" isLoading={isPending} className="gap-2 cursor-pointer">
+            <Button type="submit" isLoading={isPending} className="gap-2 cursor-pointer min-h-[44px]">
               <Save className="h-4 w-4" />
-              <span>Save Profile Changes</span>
+              <span>{t.settings.saveChanges}</span>
             </Button>
           </div>
         </form>

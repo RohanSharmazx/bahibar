@@ -1,9 +1,16 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { requireGymAccess } from '@/lib/supabase/auth-helpers';
+import { requireGymAccess, requireActiveSubscription } from '@/lib/supabase/auth-helpers';
 import { memberSchema, addMemberSchema } from '@/lib/validations/members';
 import { calculateEndDate, formatDateToISO } from '@/lib/utils/dates';
+import {
+  resolveCurrentMembership,
+  calculateMembershipDues,
+  isMembershipActive,
+  isMembershipExpiringSoon,
+  isMembershipExpired,
+} from '@/lib/utils/memberships';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
@@ -23,6 +30,7 @@ export async function createMemberAction(
 ): Promise<MemberActionState> {
   try {
     const { gymId } = await requireGymAccess();
+    await requireActiveSubscription(gymId);
 
     const rawData = {
       full_name: formData.get('full_name'),
@@ -51,6 +59,15 @@ export async function createMemberAction(
       return {
         error: errorList || 'Please correct the member registration errors.',
         fieldErrors,
+      };
+    }
+
+    if (parsed.data.payment_amount && parsed.data.payment_amount > parsed.data.agreed_price + 0.01) {
+      return {
+        error: `Payment amount (₹${parsed.data.payment_amount}) cannot exceed agreed price (₹${parsed.data.agreed_price}).`,
+        fieldErrors: {
+          payment_amount: [`Payment cannot exceed agreed price of ₹${parsed.data.agreed_price}`],
+        },
       };
     }
 
@@ -142,6 +159,7 @@ export async function createMemberAction(
       writeLocalDb(db);
       revalidatePath('/members');
       revalidatePath('/dashboard');
+      revalidatePath('/payments');
       redirect(`/members/${memberId}`);
     }
 
@@ -228,6 +246,7 @@ export async function createMemberAction(
 
     revalidatePath('/members');
     revalidatePath('/dashboard');
+    revalidatePath('/payments');
     redirect(`/members/${member.id}`);
   } catch (err: any) {
     if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err;
@@ -242,6 +261,7 @@ export async function updateMemberAction(
 ): Promise<MemberActionState> {
   try {
     const { gymId } = await requireGymAccess();
+    await requireActiveSubscription(gymId);
 
     const rawData = {
       full_name: formData.get('full_name'),
@@ -313,9 +333,18 @@ export async function updateMemberAction(
   }
 }
 
+export async function updateMemberFormAction(formData: FormData): Promise<void> {
+  const memberId = formData.get('member_id') as string;
+  if (!memberId) {
+    throw new Error('Member ID is missing.');
+  }
+  await updateMemberAction(memberId, null, formData);
+}
+
 export async function archiveMemberAction(memberId: string) {
   try {
     const { gymId } = await requireGymAccess();
+    await requireActiveSubscription(gymId);
 
     if (isLocalPlaceholderMode()) {
       const db = readLocalDb();
@@ -408,31 +437,29 @@ export async function getMembersWithDetailsAction(options?: {
       }
 
       const results: MemberWithMembership[] = members.map((member) => {
-        const memberPeriods = db.member_memberships
-          .filter((m) => m.member_id === member.id)
-          .sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime());
-
-        const latestPeriod = memberPeriods[0] || null;
-        let totalPaid = 0;
-        const agreedPrice = latestPeriod ? Number(latestPeriod.agreed_price) : 0;
-
-        if (latestPeriod) {
-          const periodPayments = db.payments.filter((p) => p.membership_id === latestPeriod.id);
-          totalPaid = periodPayments.reduce((acc, p) => acc + Number(p.amount), 0);
-        }
-
-        const outstanding = Math.max(0, agreedPrice - totalPaid);
+        const memberPeriods = db.member_memberships.filter((m) => m.member_id === member.id);
+        const latestPeriod = resolveCurrentMembership(memberPeriods);
+        const { totalPaid, outstandingBalance } = calculateMembershipDues(latestPeriod, db.payments);
 
         return {
           ...member,
           current_membership: latestPeriod,
           total_paid: totalPaid,
-          outstanding_balance: outstanding,
+          outstanding_balance: outstandingBalance,
         };
       });
 
       if (options?.status === 'dues') {
         return results.filter((m) => m.outstanding_balance > 0);
+      }
+      if (options?.status === 'active') {
+        return results.filter((m) => isMembershipActive(m.current_membership));
+      }
+      if (options?.status === 'expiring') {
+        return results.filter((m) => isMembershipExpiringSoon(m.current_membership, 7));
+      }
+      if (options?.status === 'expired') {
+        return results.filter((m) => isMembershipExpired(m.current_membership));
       }
 
       return results;
@@ -467,38 +494,40 @@ export async function getMembersWithDetailsAction(options?: {
       supabase
         .from('member_memberships')
         .select('*')
-        .in('member_id', memberIds)
-        .order('end_date', { ascending: false }),
+        .in('member_id', memberIds),
       supabase
         .from('payments')
-        .select('membership_id, amount')
+        .select('*')
         .in('member_id', memberIds),
     ]);
 
     const results: MemberWithMembership[] = members.map((member) => {
       const memberPeriods = (memberships || []).filter((m) => m.member_id === member.id);
-      const latestPeriod = memberPeriods[0] || null;
-
-      let totalPaid = 0;
-      let agreedPrice = latestPeriod ? Number(latestPeriod.agreed_price) : 0;
-
-      if (latestPeriod) {
-        const periodPayments = (payments || []).filter((p) => p.membership_id === latestPeriod.id);
-        totalPaid = periodPayments.reduce((acc, p) => acc + Number(p.amount), 0);
-      }
-
-      const outstanding = Math.max(0, agreedPrice - totalPaid);
+      const latestPeriod = resolveCurrentMembership(memberPeriods as MemberMembership[]);
+      const { totalPaid, outstandingBalance } = calculateMembershipDues(
+        latestPeriod,
+        (payments || []) as Payment[]
+      );
 
       return {
         ...member,
         current_membership: latestPeriod,
         total_paid: totalPaid,
-        outstanding_balance: outstanding,
+        outstanding_balance: outstandingBalance,
       };
     });
 
     if (options?.status === 'dues') {
       return results.filter((m) => m.outstanding_balance > 0);
+    }
+    if (options?.status === 'active') {
+      return results.filter((m) => isMembershipActive(m.current_membership));
+    }
+    if (options?.status === 'expiring') {
+      return results.filter((m) => isMembershipExpiringSoon(m.current_membership, 7));
+    }
+    if (options?.status === 'expired') {
+      return results.filter((m) => isMembershipExpired(m.current_membership));
     }
 
     return results;

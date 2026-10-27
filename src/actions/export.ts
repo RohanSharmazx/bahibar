@@ -3,7 +3,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireGymAccess } from '@/lib/supabase/auth-helpers';
 import { generateCsv } from '@/lib/utils/csv';
-import { isLocalPlaceholderMode, readLocalDb } from '@/lib/local-db';
+import { comparePaymentsDesc } from '@/lib/utils/memberships';
+import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
+import { revalidatePath } from 'next/cache';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
 export async function exportMembersCsvAction(): Promise<string> {
   const { gymId } = await requireGymAccess();
@@ -135,7 +140,9 @@ export async function exportPaymentsCsvAction(): Promise<string> {
 
   if (isLocalPlaceholderMode()) {
     const db = readLocalDb();
-    const payments = db.payments.filter((p) => p.gym_id === gymId);
+    const payments = db.payments
+      .filter((p) => p.gym_id === gymId)
+      .sort(comparePaymentsDesc);
     const formatted = payments.map((p) => {
       const member = db.members.find((m) => m.id === p.member_id);
       const membership = db.member_memberships.find((m) => m.id === p.membership_id);
@@ -171,15 +178,17 @@ export async function exportPaymentsCsvAction(): Promise<string> {
     .from('payments')
     .select(`
       *,
-      members!inner(full_name, mobile),
-      member_memberships!inner(plan_name_snapshot)
+      members(full_name, mobile),
+      member_memberships(plan_name_snapshot)
     `)
     .eq('gym_id', gymId)
-    .order('payment_date', { ascending: false });
+    .order('payment_date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false });
 
   if (error || !payments) throw new Error('Failed to fetch payments for export.');
 
-  const formatted = payments.map((p: any) => ({
+  const formatted = payments.sort(comparePaymentsDesc).map((p: any) => ({
     member_name: p.members?.full_name || '',
     member_mobile: p.members?.mobile || '',
     plan_name: p.member_memberships?.plan_name_snapshot || '',
@@ -267,7 +276,7 @@ export async function exportFullBackupAction(): Promise<string> {
   if (isLocalPlaceholderMode()) {
     const db = readLocalDb();
     const backup = {
-      app: 'GymManager',
+      app: 'BahiBar',
       version: '1.0.0',
       exported_at: new Date().toISOString(),
       gym: db.gyms.find((g) => g.id === gymId) || null,
@@ -291,7 +300,7 @@ export async function exportFullBackupAction(): Promise<string> {
   ]);
 
   const backup = {
-    app: 'GymManager',
+    app: 'BahiBar',
     version: '1.0.0',
     exported_at: new Date().toISOString(),
     gym: gymRes.data || null,
@@ -303,4 +312,180 @@ export async function exportFullBackupAction(): Promise<string> {
   };
 
   return JSON.stringify(backup, null, 2);
+}
+
+import { validateBackupJson, type BackupValidationResult, type BackupPreviewData } from '@/lib/utils/backup';
+
+export type BackupPreviewResult = BackupValidationResult;
+
+export async function validateAndPreviewBackupAction(backupJsonString: string): Promise<BackupPreviewResult> {
+  try {
+    await requireGymAccess();
+    return validateBackupJson(backupJsonString);
+  } catch (err: any) {
+    return { valid: false, error: err.message || 'Failed to validate backup.' };
+  }
+}
+
+
+export async function restoreFullBackupAction(
+  backupJsonString: string,
+  mode: 'merge' | 'replace'
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const { gymId, role } = await requireGymAccess();
+    if (role !== 'owner') {
+      return { success: false, error: 'Only gym owners can restore database backups.' };
+    }
+
+    const preview = await validateAndPreviewBackupAction(backupJsonString);
+    if (!preview.valid || !preview.preview) {
+      return { success: false, error: preview.error || 'Backup validation failed.' };
+    }
+
+    const parsed = JSON.parse(backupJsonString);
+
+    if (isLocalPlaceholderMode()) {
+      const db = readLocalDb();
+
+      // Create an automatic rollback snapshot before modifying anything!
+      try {
+        const localDbPath = path.join(process.cwd(), '.local-db.json');
+        const rollbackPath = path.join(process.cwd(), '.local-db.pre-restore-backup.json');
+        fs.copyFileSync(localDbPath, rollbackPath);
+      } catch {
+        // Fallback or ignore if cannot copy
+      }
+
+      if (mode === 'replace') {
+        // Safe replace: remove current gym's existing records and insert the backup records
+        db.membership_plans = db.membership_plans.filter((p) => p.gym_id !== gymId);
+        db.members = db.members.filter((m) => m.gym_id !== gymId);
+        db.member_memberships = db.member_memberships.filter((m) => m.gym_id !== gymId);
+        db.payments = db.payments.filter((p) => p.gym_id !== gymId);
+
+        // Reassign all restored records to the current gymId
+        const restoredPlans = parsed.plans.map((p: any) => ({ ...p, gym_id: gymId }));
+        const restoredMembers = parsed.members.map((m: any) => ({ ...m, gym_id: gymId }));
+        const restoredMemberships = parsed.memberships.map((m: any) => ({ ...m, gym_id: gymId }));
+        const restoredPayments = parsed.payments.map((p: any) => ({ ...p, gym_id: gymId }));
+
+        db.membership_plans.push(...restoredPlans);
+        db.members.push(...restoredMembers);
+        db.member_memberships.push(...restoredMemberships);
+        db.payments.push(...restoredPayments);
+
+        if (parsed.gym) {
+          const gym = db.gyms.find((g) => g.id === gymId);
+          if (gym) {
+            gym.name = parsed.gym.name || gym.name;
+            gym.owner_name = parsed.gym.owner_name || gym.owner_name;
+            gym.contact_number = parsed.gym.contact_number || gym.contact_number;
+            gym.address = parsed.gym.address || gym.address;
+          }
+        }
+      } else {
+        // Merge mode: add non-duplicate records, preserve existing
+        const planIdMap = new Map<string, string>();
+        for (const plan of parsed.plans) {
+          const existing = db.membership_plans.find(
+            (p) => p.gym_id === gymId && p.name.toLowerCase() === plan.name.toLowerCase()
+          );
+          if (existing) {
+            planIdMap.set(plan.id, existing.id);
+          } else {
+            const newId = crypto.randomUUID();
+            planIdMap.set(plan.id, newId);
+            db.membership_plans.push({ ...plan, id: newId, gym_id: gymId });
+          }
+        }
+
+        const memberIdMap = new Map<string, string>();
+        for (const member of parsed.members) {
+          const cleanMobile = member.mobile.replace(/\D/g, '');
+          const existing = db.members.find(
+            (m) => m.gym_id === gymId && m.mobile.replace(/\D/g, '') === cleanMobile
+          );
+          if (existing) {
+            memberIdMap.set(member.id, existing.id);
+          } else {
+            const newId = crypto.randomUUID();
+            memberIdMap.set(member.id, newId);
+            db.members.push({ ...member, id: newId, gym_id: gymId });
+          }
+        }
+
+        const membershipIdMap = new Map<string, string>();
+        for (const mem of parsed.memberships) {
+          const targetMemberId = memberIdMap.get(mem.member_id);
+          const targetPlanId = planIdMap.get(mem.plan_id) || mem.plan_id;
+          if (targetMemberId) {
+            const existingPeriod = db.member_memberships.find(
+              (m) =>
+                m.gym_id === gymId &&
+                m.member_id === targetMemberId &&
+                m.start_date === mem.start_date &&
+                m.end_date === mem.end_date
+            );
+            if (existingPeriod) {
+              membershipIdMap.set(mem.id, existingPeriod.id);
+            } else {
+              const newId = crypto.randomUUID();
+              membershipIdMap.set(mem.id, newId);
+              db.member_memberships.push({
+                ...mem,
+                id: newId,
+                gym_id: gymId,
+                member_id: targetMemberId,
+                plan_id: targetPlanId,
+              });
+            }
+          }
+        }
+
+        for (const p of parsed.payments) {
+          const targetMemberId = memberIdMap.get(p.member_id);
+          const targetMembershipId = membershipIdMap.get(p.membership_id);
+          if (targetMemberId && targetMembershipId) {
+            const existingPayment = db.payments.find(
+              (pay) =>
+                pay.gym_id === gymId &&
+                pay.membership_id === targetMembershipId &&
+                pay.amount === p.amount &&
+                pay.payment_date === p.payment_date
+            );
+            if (!existingPayment) {
+              db.payments.push({
+                ...p,
+                id: crypto.randomUUID(),
+                gym_id: gymId,
+                member_id: targetMemberId,
+                membership_id: targetMembershipId,
+              });
+            }
+          }
+        }
+      }
+
+      writeLocalDb(db);
+      revalidatePath('/dashboard');
+      revalidatePath('/members');
+      revalidatePath('/plans');
+      revalidatePath('/payments');
+      revalidatePath('/export');
+      revalidatePath('/settings');
+
+      return {
+        success: true,
+        message: `Successfully restored backup in ${mode} mode. ${parsed.members.length} members and ${parsed.payments.length} transactions processed.`,
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Cloud database restore should be managed via Supabase SQL migration console for tenant safety.',
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Restoration failed.' };
+  }
 }

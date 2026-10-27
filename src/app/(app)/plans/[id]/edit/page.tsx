@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { updatePlanAction, getPlanByIdAction } from '@/actions/plans';
+import { updatePlanFormAction, getPlanByIdAction } from '@/actions/plans';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,11 +20,6 @@ export default async function EditPlanPage({
     notFound();
   }
 
-  async function handlePlanUpdate(formData: FormData) {
-    'use server';
-    await updatePlanAction(id, null, formData);
-  }
-
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Link
@@ -43,7 +38,8 @@ export default async function EditPlanPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={handlePlanUpdate} className="space-y-4">
+          <form action={updatePlanFormAction} className="space-y-4">
+            <input type="hidden" name="plan_id" value={plan.id} />
             <Input
               label="Plan Name"
               id="name"

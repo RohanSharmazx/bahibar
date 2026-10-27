@@ -1,5 +1,6 @@
-export const APP_NAME = 'GymManager';
-export const APP_DESCRIPTION = 'Digital gym management for local gym owners';
+export const APP_NAME = 'BahiBar';
+export const APP_DESCRIPTION = 'Gym records, sorted.';
+export const APP_TAGLINE = 'Gym records, sorted.';
 
 export const CURRENCY = {
   code: 'INR',

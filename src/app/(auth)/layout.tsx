@@ -1,22 +1,16 @@
 import * as React from 'react';
-import { Dumbbell } from 'lucide-react';
 import Link from 'next/link';
+import { BahiBarLogo } from '@/components/ui/logo';
+import { LanguageToggle } from '@/lib/i18n/context';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8 px-4">
-        <Link href="/" className="inline-flex items-center gap-3 group">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-md group-hover:bg-sky-700 transition-colors">
-            <Dumbbell className="h-6 w-6" />
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900">
-            Gym<span className="text-sky-600">Manager</span>
-          </span>
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-10 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md flex items-center justify-between px-4 mb-6">
+        <Link href="/" className="inline-flex items-center group" aria-label="BahiBar Home">
+          <BahiBarLogo size="md" showTagline={false} />
         </Link>
-        <p className="mt-2 text-sm text-slate-500">
-          Digital gym register & fee management for local gym owners
-        </p>
+        <LanguageToggle />
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md px-4">

@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { requireGymAccess } from '@/lib/supabase/auth-helpers';
+import { requireGymAccess, requireActiveSubscription } from '@/lib/supabase/auth-helpers';
 import { planSchema } from '@/lib/validations/plans';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -21,6 +21,7 @@ export async function createPlanAction(
 ): Promise<PlanActionState> {
   try {
     const { gymId } = await requireGymAccess();
+    await requireActiveSubscription(gymId);
 
     const rawData = {
       name: formData.get('name'),
@@ -93,6 +94,7 @@ export async function updatePlanAction(
 ): Promise<PlanActionState> {
   try {
     const { gymId } = await requireGymAccess();
+    await requireActiveSubscription(gymId);
 
     const rawData = {
       name: formData.get('name'),
@@ -153,9 +155,27 @@ export async function updatePlanAction(
   }
 }
 
+export async function updatePlanFormAction(formData: FormData): Promise<void> {
+  const planId = formData.get('plan_id') as string;
+  if (!planId) {
+    throw new Error('Plan ID is missing.');
+  }
+  await updatePlanAction(planId, null, formData);
+}
+
+export async function togglePlanActiveFormAction(formData: FormData): Promise<void> {
+  const planId = formData.get('plan_id') as string;
+  const currentActive = formData.get('current_active') === 'true';
+  if (!planId) {
+    throw new Error('Plan ID is missing.');
+  }
+  await togglePlanActiveAction(planId, currentActive);
+}
+
 export async function togglePlanActiveAction(planId: string, currentActive: boolean) {
   try {
     const { gymId } = await requireGymAccess();
+    await requireActiveSubscription(gymId);
 
     if (isLocalPlaceholderMode()) {
       const db = readLocalDb();

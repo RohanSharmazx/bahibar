@@ -6,9 +6,13 @@ import { getMemberByIdAction } from '@/actions/members';
 import { getPlansAction } from '@/actions/plans';
 import { getMemberMembershipsHistoryAction } from '@/actions/memberships';
 import { getPaymentsHistoryAction } from '@/actions/payments';
+import { getCurrentGymData } from '@/actions/gym';
 import { MemberActionsClient } from '@/components/members/MemberActionsClient';
+import { MemberPaymentHistoryClient } from '@/components/payments/MemberPaymentHistoryClient';
 import { formatCurrency } from '@/lib/utils/currency';
-import { formatDate } from '@/lib/utils/dates';
+import { formatDate, getDaysRemaining, isExpired } from '@/lib/utils/dates';
+import { resolveCurrentMembership, calculateMembershipDues } from '@/lib/utils/memberships';
+import { normalizeIndianPhoneNumber } from '@/lib/utils/pdf';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -24,8 +28,12 @@ import {
   History,
   CheckCircle2,
   Clock,
+  MessageCircle,
 } from 'lucide-react';
 import type { Member } from '@/types';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function MemberDetailPage({
   params,
@@ -41,34 +49,38 @@ export default async function MemberDetailPage({
     notFound();
   }
 
-  // 2. Fetch all memberships history & payments & available plans
-  const [memberships, payments, availablePlans] = await Promise.all([
+  // 2. Fetch all memberships history, payments, available plans, and gym data
+  const [memberships, payments, availablePlans, gymData] = await Promise.all([
     getMemberMembershipsHistoryAction(id),
     getPaymentsHistoryAction(id),
     getPlansAction(true),
+    getCurrentGymData(),
   ]);
 
-  const currentMembership = memberships.find((m) => m.status === 'active') || memberships[0] || null;
+  const currentMembership = resolveCurrentMembership(memberships);
 
   // Outstanding balance calculation for current active membership
-  let totalPaidForCurrent = 0;
-  let outstandingBalance = 0;
-
-  if (currentMembership) {
-    const currentPayments = payments.filter((p) => p.membership_id === currentMembership.id);
-    totalPaidForCurrent = currentPayments.reduce((acc, p) => acc + Number(p.amount), 0);
-    outstandingBalance = Math.max(0, Number(currentMembership.agreed_price) - totalPaidForCurrent);
-  }
+  const { totalPaid: totalPaidForCurrent, outstandingBalance } = calculateMembershipDues(
+    currentMembership,
+    payments
+  );
 
   // Calculate days remaining
-  let daysRemaining: number | null = null;
-  let isCurrentExpired = false;
-  if (currentMembership) {
-    const end = new Date(currentMembership.end_date);
-    const now = new Date();
-    daysRemaining = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysRemaining < 0) isCurrentExpired = true;
+  const daysRemaining = currentMembership ? getDaysRemaining(currentMembership.end_date) : null;
+  const isCurrentExpired = currentMembership ? isExpired(currentMembership.end_date) : false;
+
+  // Formulate WhatsApp follow-up link for India (prefix with 91, strip leading 0)
+  const cleanPhone = normalizeIndianPhoneNumber(member.mobile);
+
+  let followUpText = `Hi ${member.full_name}, greetings from ${gymData.gym?.name || 'the gym'}!`;
+  if (outstandingBalance > 0) {
+    followUpText = `Hi ${member.full_name}, this is a gentle reminder from ${gymData.gym?.name || 'the gym'} regarding your pending fee balance of ${formatCurrency(outstandingBalance)}. Please let us know if you need any assistance.`;
+  } else if (isCurrentExpired) {
+    followUpText = `Hi ${member.full_name}, your membership at ${gymData.gym?.name || 'the gym'} has expired. Please visit the front desk to renew your plan!`;
+  } else if (daysRemaining !== null && daysRemaining <= 7 && currentMembership) {
+    followUpText = `Hi ${member.full_name}, your gym membership at ${gymData.gym?.name || 'the gym'} is expiring on ${formatDate(currentMembership.end_date)}. Renew early to keep your workouts uninterrupted!`;
   }
+  const whatsAppUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(followUpText)}`;
 
   return (
     <div className="space-y-6">
@@ -162,6 +174,28 @@ export default async function MemberDetailPage({
                 <p className="mt-0.5 text-slate-700">{member.notes}</p>
               </div>
             )}
+
+            {/* Quick Contact & WhatsApp Follow-up */}
+            <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+              <a
+                href={`tel:${member.mobile}`}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
+                title={`Call ${member.full_name}`}
+              >
+                <Phone className="h-3.5 w-3.5 text-slate-500" />
+                Call
+              </a>
+              <a
+                href={whatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-emerald-300 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 shadow-2xs hover:bg-emerald-100 transition-colors"
+                title="Send WhatsApp Follow-up"
+              >
+                <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                WhatsApp
+              </a>
+            </div>
           </CardContent>
         </Card>
 
@@ -263,24 +297,20 @@ export default async function MemberDetailPage({
             <CreditCard className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent className="pt-2">
-            {payments.length === 0 ? (
-              <p className="text-sm text-slate-500 py-6 text-center">No payment transactions recorded.</p>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {payments.map((p) => (
-                  <div key={p.id} className="py-3 flex items-center justify-between first:pt-0 last:pb-0">
-                    <div>
-                      <p className="font-bold text-slate-900">{formatCurrency(p.amount)}</p>
-                      <p className="text-xs text-slate-500">
-                        {formatDate(p.payment_date)} • <span className="uppercase font-medium">{p.payment_method}</span>
-                        {p.transaction_reference ? ` • Ref: ${p.transaction_reference}` : ''}
-                      </p>
-                    </div>
-                    <Badge variant="success">Paid</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
+            <MemberPaymentHistoryClient
+              payments={payments}
+              memberName={member.full_name}
+              memberMobile={member.mobile}
+              memberEmail={member.email}
+              planName={currentMembership?.plan_name_snapshot}
+              gymName={gymData.gym?.name}
+              gymPhone={gymData.gym?.contact_number}
+              gymAddress={gymData.gym?.address}
+              agreedPrice={currentMembership ? Number(currentMembership.agreed_price) : undefined}
+              startDate={currentMembership?.start_date}
+              endDate={currentMembership?.end_date}
+              outstandingBalance={outstandingBalance}
+            />
           </CardContent>
         </Card>
 

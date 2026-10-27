@@ -1,6 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import {
@@ -15,14 +15,29 @@ import {
   writeLocalDb,
   type LocalUser,
 } from '@/lib/local-db';
-import { LOCAL_SESSION_COOKIE, type LocalSession } from '@/lib/supabase/auth-helpers';
+import { LOCAL_SESSION_COOKIE, ACTIVE_GYM_COOKIE, type LocalSession } from '@/lib/supabase/auth-helpers';
 import crypto from 'crypto';
 
 export type ActionState = {
   success?: boolean;
   error?: string;
   fieldErrors?: Record<string, string[]>;
+  devResetUrl?: string;
 };
+
+async function getBaseUrl(): Promise<string> {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, '');
+  }
+  try {
+    const headerList = await headers();
+    const host = headerList.get('x-forwarded-host') || headerList.get('host') || 'localhost:3000';
+    const proto = headerList.get('x-forwarded-proto') || (host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'http');
+    return `${proto}://${host}`;
+  } catch {
+    return 'http://localhost:3000';
+  }
+}
 
 export async function loginAction(
   prevState: ActionState | null,
@@ -57,6 +72,8 @@ export async function loginAction(
 
     // Set local session cookie
     const cookieStore = await cookies();
+    const headerList = await headers();
+    const isHttps = headerList.get('x-forwarded-proto') === 'https';
     const sessionData: LocalSession = {
       userId: user.id,
       email: user.email,
@@ -65,7 +82,7 @@ export async function loginAction(
 
     cookieStore.set(LOCAL_SESSION_COOKIE, JSON.stringify(sessionData), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 30, // 30 days
@@ -74,7 +91,15 @@ export async function loginAction(
     // Check if user has gym onboarded
     const staff = db.gym_staff.find((s) => s.user_id === user.id);
     if (!staff) {
+      cookieStore.delete(ACTIVE_GYM_COOKIE);
       redirect('/onboarding');
+    }
+
+    // Set or preserve active gym workspace for this user
+    const currentActive = cookieStore.get(ACTIVE_GYM_COOKIE)?.value;
+    const isAuthorized = currentActive && db.gym_staff.some((s) => s.user_id === user.id && s.gym_id === currentActive);
+    if (!isAuthorized) {
+      cookieStore.set(ACTIVE_GYM_COOKIE, staff.gym_id, { path: '/', sameSite: 'lax' });
     }
 
     redirect('/dashboard');
@@ -91,6 +116,18 @@ export async function loginAction(
     return { error: error.message };
   }
 
+  const cookieStore = await cookies();
+  const { data: staffList } = await supabase
+    .from('gym_staff')
+    .select('gym_id')
+    .limit(1);
+
+  if (!staffList || staffList.length === 0) {
+    cookieStore.delete(ACTIVE_GYM_COOKIE);
+    redirect('/onboarding');
+  }
+
+  cookieStore.set(ACTIVE_GYM_COOKIE, staffList[0].gym_id, { path: '/', sameSite: 'lax' });
   redirect('/dashboard');
 }
 
@@ -144,6 +181,8 @@ export async function registerAction(
 
     // Set local session cookie
     const cookieStore = await cookies();
+    const headerList = await headers();
+    const isHttps = headerList.get('x-forwarded-proto') === 'https';
     const sessionData: LocalSession = {
       userId,
       email,
@@ -152,7 +191,7 @@ export async function registerAction(
 
     cookieStore.set(LOCAL_SESSION_COOKIE, JSON.stringify(sessionData), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 30, // 30 days
@@ -181,14 +220,14 @@ export async function registerAction(
 }
 
 export async function logoutAction(): Promise<void> {
+  const cookieStore = await cookies();
   if (isLocalPlaceholderMode()) {
-    const cookieStore = await cookies();
     cookieStore.delete(LOCAL_SESSION_COOKIE);
-    redirect('/login');
+  } else {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
   }
-
-  const supabase = await createClient();
-  await supabase.auth.signOut();
+  cookieStore.delete(ACTIVE_GYM_COOKIE);
   redirect('/login');
 }
 
@@ -209,17 +248,54 @@ export async function forgotPasswordAction(
   const { email } = parsed.data;
 
   if (isLocalPlaceholderMode()) {
-    // In local mode, confirm immediately
-    return { success: true };
+    const db = readLocalDb();
+    const user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+
+    let devResetUrl: string | undefined = undefined;
+
+    if (user) {
+      // Clean up previous tokens for this user
+      db.password_reset_tokens = (db.password_reset_tokens || []).filter(
+        (t) => t.user_id !== user.id
+      );
+
+      // Generate 1-hour secure reset token
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+      db.password_reset_tokens.push({
+        token,
+        user_id: user.id,
+        email: user.email,
+        expires_at: expiresAt,
+        created_at: new Date().toISOString(),
+      });
+
+      writeLocalDb(db);
+
+      const baseUrl = await getBaseUrl();
+      const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('\n======================================================');
+        console.log(`[BahiBar Local Auth] Password Reset Link for ${user.email}:`);
+        console.log(resetUrl);
+        console.log('======================================================\n');
+        devResetUrl = resetUrl;
+      }
+    }
+
+    // Always return generic success to prevent email enumeration
+    return { success: true, devResetUrl };
   }
 
   const supabase = await createClient();
+  const siteUrl = await getBaseUrl();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
+    redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
   });
 
   if (error) {
-    return { error: error.message };
+    console.error('Supabase password reset error:', error.message);
   }
 
   return { success: true };
@@ -234,15 +310,50 @@ export async function resetPasswordAction(
 
   if (!parsed.success) {
     return {
-      error: 'Please enter matching valid passwords.',
+      error: 'Please enter matching valid passwords (at least 6 characters).',
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
 
   const { password } = parsed.data;
+  const token = formData.get('token') as string | null;
 
   if (isLocalPlaceholderMode()) {
-    redirect('/login');
+    if (!token) {
+      return {
+        error: 'Missing password reset token. Please use the reset link provided in your email.',
+      };
+    }
+
+    const db = readLocalDb();
+    const tokenRecord = (db.password_reset_tokens || []).find((t) => t.token === token);
+
+    if (!tokenRecord) {
+      return {
+        error: 'This password reset link is invalid or has already been used.',
+      };
+    }
+
+    if (new Date(tokenRecord.expires_at) < new Date()) {
+      return {
+        error: 'This password reset link has expired. Please request a new one.',
+      };
+    }
+
+    const user = db.users.find((u) => u.id === tokenRecord.user_id);
+    if (!user) {
+      return { error: 'Account not found. Please register first.' };
+    }
+
+    // Update password hash
+    const newHash = crypto.createHash('sha256').update(password).digest('hex');
+    user.password_hash = newHash;
+
+    // Invalidate used token
+    db.password_reset_tokens = db.password_reset_tokens?.filter((t) => t.token !== token);
+    writeLocalDb(db);
+
+    redirect('/login?reset=success');
   }
 
   const supabase = await createClient();
@@ -254,5 +365,53 @@ export async function resetPasswordAction(
     return { error: error.message };
   }
 
-  redirect('/login');
+  redirect('/login?reset=success');
+}
+
+export async function validateResetTokenAction(
+  token: string | null
+): Promise<{ valid: boolean; error?: string }> {
+  if (isLocalPlaceholderMode()) {
+    if (!token) {
+      return {
+        valid: false,
+        error: 'No password reset token was provided. Please use the link sent in your email.',
+      };
+    }
+
+    const db = readLocalDb();
+    const tokenRecord = (db.password_reset_tokens || []).find((t) => t.token === token);
+
+    if (!tokenRecord) {
+      return {
+        valid: false,
+        error: 'This password reset link is invalid or has already been used.',
+      };
+    }
+
+    if (new Date(tokenRecord.expires_at) < new Date()) {
+      return {
+        valid: false,
+        error: 'This password reset link has expired. Please request a new link.',
+      };
+    }
+
+    return { valid: true };
+  }
+
+  // Cloud Supabase Mode: Verify active authenticated recovery session exists
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return {
+      valid: false,
+      error: 'No active password recovery session found. Please click the reset link in your email.',
+    };
+  }
+
+  return { valid: true };
 }

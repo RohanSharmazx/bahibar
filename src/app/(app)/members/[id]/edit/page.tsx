@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { updateMemberAction, getMemberByIdAction } from '@/actions/members';
+import { updateMemberFormAction, getMemberByIdAction } from '@/actions/members';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,11 +21,6 @@ export default async function EditMemberPage({
     notFound();
   }
 
-  async function handleUpdate(formData: FormData) {
-    'use server';
-    await updateMemberAction(id, null, formData);
-  }
-
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Link
@@ -42,7 +37,8 @@ export default async function EditMemberPage({
           <CardDescription>Update member contact and demographic details</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={handleUpdate} className="space-y-4">
+          <form action={updateMemberFormAction} className="space-y-4">
+            <input type="hidden" name="member_id" value={member.id} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label="Full Name"

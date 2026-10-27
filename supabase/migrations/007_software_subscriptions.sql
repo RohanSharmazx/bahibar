@@ -25,13 +25,14 @@ CREATE TABLE subscription_history (
 ALTER TABLE software_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscription_history ENABLE ROW LEVEL SECURITY;
 
--- Users can only view their gym's subscription
+-- Users can view and insert their gym's initial trial subscription
 CREATE POLICY "Users can view own subscription"
   ON software_subscriptions FOR SELECT
   USING (gym_id IN (SELECT user_gym_ids()));
 
--- Only server/admin can modify subscriptions (no INSERT/UPDATE policy for regular users)
--- This will be managed server-side when gym is created
+CREATE POLICY "Users can insert own subscription"
+  ON software_subscriptions FOR INSERT
+  WITH CHECK (gym_id IN (SELECT user_gym_ids()));
 
 CREATE POLICY "Users can view own subscription history"
   ON subscription_history FOR SELECT

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Right B-Bowl (Primary Blue #087FDB) -->
+  <path
+    d="M48 14H62C76 14 86 21 86 33.5C86 42 79 48 70 50C81 52 89 59 89 69.5C89 82.5 77 88 62 88H48V14Z"
+    fill="#087FDB"
+  />
+  <path
+    d="M52 24H60C68 24 73 27 73 33.5C73 40 68 43 60 43H52V24Z"
+    fill="#FFFFFF"
+  />
+  <path
+    d="M52 57H60C70 57 76 61 76 69.5C76 78 70 80 60 80H52V57Z"
+    fill="#FFFFFF"
+  />
+  <rect x="22" y="14" width="30" height="74" rx="2" fill="#FFFFFF" />
+  <path
+    d="M32 14H20C15.58 14 12 17.58 12 22V80C12 84.42 15.58 88 20 88H48V78H22V14H32Z"
+    fill="#101F33"
+  />
+  <path d="M22 14H36L22 28V14Z" fill="#12BBDD" />
+  <rect x="24" y="34" width="22" height="3.5" rx="1.75" fill="#087FDB" />
+  <rect x="24" y="42" width="22" height="3.5" rx="1.75" fill="#087FDB" />
+  <rect x="22" y="65" width="56" height="5" rx="2.5" fill="#101F33" />
+  <rect x="28" y="55" width="7" height="25" rx="3.5" fill="#12BBDD" stroke="#FFFFFF" stroke-width="1.5" />
+  <rect x="21" y="60" width="5" height="15" rx="2.5" fill="#12BBDD" />
+  <rect x="68" y="55" width="7" height="25" rx="3.5" fill="#12BBDD" stroke="#FFFFFF" stroke-width="1.5" />
+  <rect x="77" y="60" width="5" height="15" rx="2.5" fill="#12BBDD" />
+</svg>

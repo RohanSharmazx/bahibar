@@ -9,7 +9,7 @@ export default async function ProtectedAppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { gym, subscription, userName } = await getCurrentGymData();
+  const { gym, subscription, userName, accessibleGyms } = await getCurrentGymData();
 
   // If user is authenticated but has not onboarded a gym yet, redirect to onboarding
   if (!gym) {
@@ -17,7 +17,12 @@ export default async function ProtectedAppLayout({
   }
 
   return (
-    <AppShell gym={gym} subscription={subscription} userName={userName}>
+    <AppShell
+      gym={gym}
+      subscription={subscription}
+      userName={userName}
+      accessibleGyms={accessibleGyms}
+    >
       {children}
     </AppShell>
   );

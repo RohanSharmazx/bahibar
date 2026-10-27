@@ -13,26 +13,15 @@ import {
   Settings,
   UserPlus,
   X,
-  Dumbbell,
   LogOut,
   ShieldCheck,
   ShieldAlert,
 } from 'lucide-react';
+import { BahiBarIcon } from '@/components/ui/logo';
 import { logoutAction } from '@/actions/auth';
+import { useI18n, LanguageToggle } from '@/lib/i18n/context';
 import type { Gym, SoftwareSubscription } from '@/types';
 import { differenceInDays, parseISO } from 'date-fns';
-
-const mainNavigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Members', href: '/members', icon: Users },
-  { name: 'Membership Plans', href: '/plans', icon: CreditCard },
-  { name: 'Payments & Collections', href: '/payments', icon: IndianRupee },
-];
-
-const secondaryNavigation = [
-  { name: 'Export Data', href: '/export', icon: Download },
-  { name: 'Gym Settings', href: '/settings', icon: Settings },
-];
 
 interface MobileNavDrawerProps {
   isOpen: boolean;
@@ -51,6 +40,19 @@ export function MobileNavDrawer({
 }: MobileNavDrawerProps) {
   const pathname = usePathname();
   const drawerRef = useRef<HTMLDivElement>(null);
+  const { t } = useI18n();
+
+  const mainNavigation = [
+    { name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
+    { name: t('nav.members'), href: '/members', icon: Users },
+    { name: t('nav.plans'), href: '/plans', icon: CreditCard },
+    { name: t('nav.payments'), href: '/payments', icon: IndianRupee },
+  ];
+
+  const secondaryNavigation = [
+    { name: t('nav.export'), href: '/export', icon: Download },
+    { name: t('nav.settings'), href: '/settings', icon: Settings },
+  ];
 
   // Close on Escape key
   useEffect(() => {
@@ -80,8 +82,12 @@ export function MobileNavDrawer({
 
   if (!isOpen) return null;
 
-  const isTrial = subscription?.status === 'trial';
-  const isExpired = subscription?.status === 'expired';
+  const isFreePilot =
+    subscription?.status === 'pilot' ||
+    subscription?.plan_name === 'Free Pilot' ||
+    process.env.NEXT_PUBLIC_FREE_PILOT !== 'false';
+  const isTrial = !isFreePilot && subscription?.status === 'trial';
+  const isExpired = !isFreePilot && subscription?.status === 'expired';
   let daysLeftInTrial = 0;
   if (isTrial && subscription?.end_date) {
     daysLeftInTrial = Math.max(0, differenceInDays(parseISO(subscription.end_date), new Date()));
@@ -110,15 +116,15 @@ export function MobileNavDrawer({
           {/* Top Bar with Gym info & Close button */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-600 text-white shadow-xs">
-                <Dumbbell className="h-5 w-5" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-200 shadow-2xs">
+                <BahiBarIcon size={24} />
               </div>
               <div className="min-w-0">
                 <h2 className="text-sm font-bold text-slate-900 leading-tight truncate">
-                  {gym ? gym.name : 'GymManager'}
+                  {gym ? gym.name : 'BahiBar'}
                 </h2>
                 <p className="text-[11px] text-slate-500 truncate">
-                  {gym ? `Owner: ${gym.owner_name}` : 'Local Gym App'}
+                  {gym ? `Owner: ${gym.owner_name}` : 'Gym records, sorted.'}
                 </p>
               </div>
             </div>
@@ -133,6 +139,16 @@ export function MobileNavDrawer({
           </div>
 
           {/* Software Subscription Indicator */}
+          {isFreePilot && (
+            <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-900">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span>Free Pilot Partner • Full Access</span>
+              </div>
+              <span className="text-[10px] uppercase font-bold text-emerald-700">Pilot</span>
+            </div>
+          )}
+
           {isTrial && (
             <Link
               href="/settings"
@@ -162,33 +178,33 @@ export function MobileNavDrawer({
           <Link
             href="/members/new"
             onClick={onClose}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white shadow-xs hover:bg-sky-700 active:bg-sky-800 transition-colors"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#087FDB] px-4 text-sm font-semibold text-white shadow-xs hover:bg-[#0669b6] active:bg-[#055393] transition-colors"
           >
             <UserPlus className="h-4 w-4" />
-            <span>Add Member</span>
+            <span>{t('common.addMember')}</span>
           </Link>
 
           {/* Primary Management Navigation */}
           <nav className="space-y-1">
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-              Management
+              {t('nav.management')}
             </p>
             {mainNavigation.map((item) => {
               const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
               const Icon = item.icon;
               return (
                 <Link
-                  key={item.name}
+                  key={item.href}
                   href={item.href}
                   onClick={onClose}
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-sky-50 text-sky-700 font-semibold'
+                      ? 'bg-sky-50 text-[#087FDB] font-semibold'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   )}
                 >
-                  <Icon className={cn('h-5 w-5', isActive ? 'text-sky-600' : 'text-slate-400')} />
+                  <Icon className={cn('h-5 w-5', isActive ? 'text-[#087FDB]' : 'text-slate-400')} />
                   <span>{item.name}</span>
                 </Link>
               );
@@ -198,24 +214,24 @@ export function MobileNavDrawer({
           {/* System & Tools Navigation */}
           <nav className="space-y-1">
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-              System
+              {t('nav.system')}
             </p>
             {secondaryNavigation.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
               return (
                 <Link
-                  key={item.name}
+                  key={item.href}
                   href={item.href}
                   onClick={onClose}
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-sky-50 text-sky-700 font-semibold'
+                      ? 'bg-sky-50 text-[#087FDB] font-semibold'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   )}
                 >
-                  <Icon className={cn('h-5 w-5', isActive ? 'text-sky-600' : 'text-slate-400')} />
+                  <Icon className={cn('h-5 w-5', isActive ? 'text-[#087FDB]' : 'text-slate-400')} />
                   <span>{item.name}</span>
                 </Link>
               );
@@ -223,12 +239,17 @@ export function MobileNavDrawer({
           </nav>
         </div>
 
-        {/* User Account & Logout in Drawer */}
+        {/* User Account & Language Selection in Drawer */}
         <div className="pt-4 border-t border-slate-200 mt-4 space-y-3">
           <div className="flex items-center justify-between px-2">
+            <span className="text-xs font-semibold text-slate-500">Language / भाषा</span>
+            <LanguageToggle />
+          </div>
+
+          <div className="flex items-center justify-between px-2 pt-1 border-t border-slate-100">
             <div>
               <p className="text-sm font-semibold text-slate-800">{userName || 'Gym Owner'}</p>
-              <p className="text-xs text-slate-400">Gym Manager Account</p>
+              <p className="text-xs text-slate-400">{t('common.owner')}</p>
             </div>
             <form action={logoutAction}>
               <button
@@ -237,13 +258,13 @@ export function MobileNavDrawer({
                 aria-label="Sign out"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Logout</span>
+                <span>{t('common.signOut')}</span>
               </button>
             </form>
           </div>
 
           <div className="rounded-xl bg-slate-50 p-2.5 text-[11px] text-slate-500 border border-slate-100 flex items-center justify-between">
-            <span className="font-semibold text-slate-700">GymManager v1.0</span>
+            <span className="font-semibold text-slate-700">BahiBar v1.0</span>
             <span className="flex items-center gap-1 text-emerald-700">
               <ShieldCheck className="h-3 w-3" /> Secure Local
             </span>

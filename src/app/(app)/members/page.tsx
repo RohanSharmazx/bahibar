@@ -24,6 +24,9 @@ interface MembersPageProps {
   }>;
 }
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function MembersPage({ searchParams }: MembersPageProps) {
   const { search, status = 'all' } = await searchParams;
   const members = await getMembersWithDetailsAction({ search, status });
@@ -158,12 +161,12 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {currentMem ? (
-                          daysRemaining! < 0 ? (
+                          daysRemaining !== null && daysRemaining < 0 ? (
                             <Badge variant="danger" className="gap-1">
                               <AlertCircle className="h-3 w-3" />
                               Expired
                             </Badge>
-                          ) : daysRemaining! <= 7 ? (
+                          ) : daysRemaining !== null && daysRemaining <= 7 ? (
                             <Badge variant="warning" className="gap-1">
                               <Clock className="h-3 w-3" />
                               {daysRemaining}d left
@@ -234,12 +237,12 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
                           </div>
                           <div className="shrink-0">
                             {currentMem ? (
-                              daysRemaining! < 0 ? (
+                              daysRemaining !== null && daysRemaining < 0 ? (
                                 <Badge variant="danger" className="gap-1">
                                   <AlertCircle className="h-3 w-3" />
                                   Expired
                                 </Badge>
-                              ) : daysRemaining! <= 7 ? (
+                              ) : daysRemaining !== null && daysRemaining <= 7 ? (
                                 <Badge variant="warning" className="gap-1">
                                   <Clock className="h-3 w-3" />
                                   {daysRemaining}d left

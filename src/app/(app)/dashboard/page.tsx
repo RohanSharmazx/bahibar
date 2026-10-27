@@ -2,7 +2,12 @@ import Link from 'next/link';
 import { getMembersWithDetailsAction } from '@/actions/members';
 import { getCollectionSummaryAction } from '@/actions/payments';
 import { formatCurrency, formatCurrencyCompact } from '@/lib/utils/currency';
-import { formatDate, isExpiringSoon } from '@/lib/utils/dates';
+import { formatDate } from '@/lib/utils/dates';
+import {
+  isMembershipActive,
+  isMembershipExpiringSoon,
+  isMembershipExpired,
+} from '@/lib/utils/memberships';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -24,17 +29,16 @@ export default async function DashboardPage() {
   ]);
 
   const totalMembers = members.length;
-  const activeMembers = members.filter(
-    (m) => m.current_membership?.status === 'active'
+  const activeMembers = members.filter((m) =>
+    isMembershipActive(m.current_membership)
   ).length;
 
-  const expiringSoonMembers = members.filter((m) => {
-    if (!m.current_membership || m.current_membership.status !== 'active') return false;
-    return isExpiringSoon(m.current_membership.end_date, 7);
-  });
+  const expiringSoonMembers = members.filter((m) =>
+    isMembershipExpiringSoon(m.current_membership, 7)
+  );
 
-  const expiredMembers = members.filter(
-    (m) => m.current_membership?.status === 'expired'
+  const expiredMembers = members.filter((m) =>
+    isMembershipExpired(m.current_membership)
   ).length;
 
   const membersWithDues = members.filter((m) => m.outstanding_balance > 0);

@@ -1,9 +1,9 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { requireGymAccess } from '@/lib/supabase/auth-helpers';
+import { requireGymAccess, requireActiveSubscription } from '@/lib/supabase/auth-helpers';
 import { renewalSchema } from '@/lib/validations/payments';
-import { calculateEndDate, formatDateToISO } from '@/lib/utils/dates';
+import { calculateEndDate, formatDateToISO, getTodayISO } from '@/lib/utils/dates';
 import { revalidatePath } from 'next/cache';
 import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
 import type { MemberMembership, Payment } from '@/types';
@@ -22,6 +22,7 @@ export async function renewMembershipAction(
 ): Promise<RenewalActionState> {
   try {
     const { gymId } = await requireGymAccess();
+    await requireActiveSubscription(gymId);
 
     const rawData = {
       plan_id: formData.get('plan_id'),
@@ -29,6 +30,7 @@ export async function renewMembershipAction(
       agreed_price: Number(formData.get('agreed_price')),
       payment_amount: formData.get('payment_amount') ? Number(formData.get('payment_amount')) : 0,
       payment_method: formData.get('payment_method') || undefined,
+      payment_date: formData.get('payment_date') || undefined,
     };
 
     const parsed = renewalSchema.safeParse(rawData);
@@ -40,13 +42,40 @@ export async function renewMembershipAction(
       };
     }
 
+    if (parsed.data.payment_amount && parsed.data.payment_amount > parsed.data.agreed_price + 0.01) {
+      return {
+        error: `Payment amount (₹${parsed.data.payment_amount}) cannot exceed agreed price (₹${parsed.data.agreed_price}).`,
+        fieldErrors: {
+          payment_amount: [`Payment cannot exceed agreed price of ₹${parsed.data.agreed_price}`],
+        },
+      };
+    }
+
     if (isLocalPlaceholderMode()) {
       const db = readLocalDb();
+      const member = db.members.find((m) => m.id === memberId && m.gym_id === gymId);
+      if (!member) {
+        return { error: 'Member not found or does not belong to your gym.' };
+      }
+
       const plan = db.membership_plans.find(
         (p) => p.id === parsed.data.plan_id && p.gym_id === gymId
       );
       if (!plan) {
         return { error: 'Selected plan was not found.' };
+      }
+
+      // Check for rapid duplicate submission (within 3 seconds)
+      const recentDuplicate = db.member_memberships.find(
+        (m) =>
+          m.member_id === memberId &&
+          m.plan_id === parsed.data.plan_id &&
+          m.start_date === parsed.data.start_date &&
+          Number(m.agreed_price) === parsed.data.agreed_price &&
+          Date.now() - new Date(m.created_at).getTime() < 3000
+      );
+      if (recentDuplicate) {
+        return { success: true };
       }
 
       // Mark previous active as expired
@@ -88,6 +117,7 @@ export async function renewMembershipAction(
       db.member_memberships.push(newMembership);
 
       if (parsed.data.payment_amount && parsed.data.payment_amount > 0 && parsed.data.payment_method) {
+        const paymentDate = parsed.data.payment_date || getTodayISO();
         const newPayment: Payment = {
           id: crypto.randomUUID(),
           gym_id: gymId,
@@ -95,7 +125,7 @@ export async function renewMembershipAction(
           membership_id: membershipId,
           amount: parsed.data.payment_amount,
           payment_method: parsed.data.payment_method as any,
-          payment_date: parsed.data.start_date,
+          payment_date: paymentDate,
           transaction_reference: null,
           notes: 'Renewal payment',
           created_at: now,
@@ -107,11 +137,23 @@ export async function renewMembershipAction(
       revalidatePath(`/members/${memberId}`);
       revalidatePath('/members');
       revalidatePath('/dashboard');
+      revalidatePath('/payments');
       return { success: true };
     }
 
     // Cloud Supabase Mode
     const supabase = await createClient();
+
+    const { data: member, error: memberError } = await supabase
+      .from('members')
+      .select('id')
+      .eq('id', memberId)
+      .eq('gym_id', gymId)
+      .single();
+
+    if (memberError || !member) {
+      return { error: 'Member not found or does not belong to your gym.' };
+    }
 
     const { data: plan, error: planError } = await supabase
       .from('membership_plans')
@@ -122,6 +164,23 @@ export async function renewMembershipAction(
 
     if (planError || !plan) {
       return { error: 'Selected plan was not found.' };
+    }
+
+    // Check for rapid duplicate submission (within 3 seconds)
+    const threeSecondsAgo = new Date(Date.now() - 3000).toISOString();
+    const { data: recentDuplicate } = await supabase
+      .from('member_memberships')
+      .select('id')
+      .eq('member_id', memberId)
+      .eq('gym_id', gymId)
+      .eq('plan_id', parsed.data.plan_id)
+      .eq('start_date', parsed.data.start_date)
+      .eq('agreed_price', parsed.data.agreed_price)
+      .gte('created_at', threeSecondsAgo)
+      .maybeSingle();
+
+    if (recentDuplicate) {
+      return { success: true };
     }
 
     await supabase
@@ -163,13 +222,14 @@ export async function renewMembershipAction(
     }
 
     if (parsed.data.payment_amount && parsed.data.payment_amount > 0 && parsed.data.payment_method) {
+      const paymentDate = parsed.data.payment_date || getTodayISO();
       await supabase.from('payments').insert({
         gym_id: gymId,
         member_id: memberId,
         membership_id: newMembership.id,
         amount: parsed.data.payment_amount,
         payment_method: parsed.data.payment_method,
-        payment_date: parsed.data.start_date,
+        payment_date: paymentDate,
         notes: 'Renewal payment',
       });
     }
@@ -177,6 +237,7 @@ export async function renewMembershipAction(
     revalidatePath(`/members/${memberId}`);
     revalidatePath('/members');
     revalidatePath('/dashboard');
+    revalidatePath('/payments');
     return { success: true };
   } catch (err: any) {
     return { error: err.message || 'Failed to process renewal.' };
@@ -191,7 +252,11 @@ export async function getMemberMembershipsHistoryAction(memberId: string): Promi
       const db = readLocalDb();
       return db.member_memberships
         .filter((m) => m.member_id === memberId && m.gym_id === gymId)
-        .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
+        .sort((a, b) => {
+          const startDiff = new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
+          if (startDiff !== 0) return startDiff;
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        });
     }
 
     const supabase = await createClient();
@@ -201,7 +266,8 @@ export async function getMemberMembershipsHistoryAction(memberId: string): Promi
       .select('*')
       .eq('member_id', memberId)
       .eq('gym_id', gymId)
-      .order('start_date', { ascending: false });
+      .order('start_date', { ascending: false })
+      .order('created_at', { ascending: false });
 
     if (error || !data) return [];
     return data as MemberMembership[];
