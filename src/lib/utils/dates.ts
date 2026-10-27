@@ -127,8 +127,46 @@ export function getMembershipStatusFromDate(endDate: Date | string): 'active' | 
 }
 
 /**
- * Get today's date as ISO string (YYYY-MM-DD) in local time
+ * Get today's date as ISO string (YYYY-MM-DD) in Indian Standard Time (Asia/Kolkata).
+ * Aligns serverless environments (which run in UTC) with local Indian gym operating hours.
  */
-export function getTodayISO(): string {
-  return format(new Date(), DATE_FORMAT.input);
+export function getTodayISO(timeZone: string = 'Asia/Kolkata'): string {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(new Date());
+  } catch {
+    return format(new Date(), DATE_FORMAT.input);
+  }
+}
+
+/**
+ * Get calendar month date range and human-readable label in Indian Standard Time (Asia/Kolkata).
+ */
+export function getCurrentMonthRange(timeZone: string = 'Asia/Kolkata'): {
+  todayStr: string;
+  monthStart: string;
+  monthEnd: string;
+  monthLabel: string;
+} {
+  const todayStr = getTodayISO(timeZone);
+  const [yearStr, monthStr] = todayStr.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const monthStart = `${yearStr}-${monthStr}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const monthEnd = `${yearStr}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
+
+  const d = new Date(year, month - 1, 1);
+  const monthLabel = new Intl.DateTimeFormat('en-IN', {
+    timeZone,
+    month: 'long',
+    year: 'numeric',
+  }).format(d);
+
+  return { todayStr, monthStart, monthEnd, monthLabel };
 }

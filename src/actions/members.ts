@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireGymAccess, requireActiveSubscription } from '@/lib/supabase/auth-helpers';
 import { memberSchema, addMemberSchema } from '@/lib/validations/members';
-import { calculateEndDate, formatDateToISO } from '@/lib/utils/dates';
+import { calculateEndDate, formatDateToISO, getTodayISO } from '@/lib/utils/dates';
 import {
   resolveCurrentMembership,
   calculateMembershipDues,
@@ -148,7 +148,7 @@ export async function createMemberAction(
           membership_id: membershipId,
           amount: parsed.data.payment_amount,
           payment_method: parsed.data.payment_method as any,
-          payment_date: parsed.data.start_date,
+          payment_date: getTodayISO(),
           transaction_reference: null,
           notes: 'Initial enrollment payment',
           created_at: now,
@@ -239,7 +239,7 @@ export async function createMemberAction(
         membership_id: membership.id,
         amount: parsed.data.payment_amount,
         payment_method: parsed.data.payment_method,
-        payment_date: parsed.data.start_date,
+        payment_date: getTodayISO(),
         notes: 'Initial enrollment payment',
       });
     }

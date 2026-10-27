@@ -9,6 +9,8 @@ import {
   isExpiringSoon,
   isExpired,
   getMembershipStatusFromDate,
+  getTodayISO,
+  getCurrentMonthRange,
 } from '@/lib/utils/dates';
 import { addDays } from 'date-fns';
 
@@ -104,5 +106,17 @@ describe('Date Calculations & Rules', () => {
     const yesterday = addDays(new Date(), -1);
     expect(isExpired(yesterday)).toBe(true);
     expect(getMembershipStatusFromDate(yesterday)).toBe('expired');
+  });
+
+  it('formats getTodayISO and getCurrentMonthRange in Indian Standard Time (Asia/Kolkata)', () => {
+    const today = getTodayISO();
+    expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    const { todayStr, monthStart, monthEnd, monthLabel } = getCurrentMonthRange();
+    expect(todayStr).toBe(today);
+    expect(monthStart).toMatch(/^\d{4}-\d{2}-01$/);
+    expect(monthEnd).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(monthLabel).toBeDefined();
+    expect(typeof monthLabel).toBe('string');
   });
 });

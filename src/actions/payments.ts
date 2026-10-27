@@ -9,6 +9,7 @@ import { DATE_FORMAT } from '@/lib/constants';
 import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
 import type { Payment, PaymentWithMember } from '@/types';
 import { comparePaymentsDesc } from '@/lib/utils/memberships';
+import { getCurrentMonthRange, formatDateLong } from '@/lib/utils/dates';
 import crypto from 'crypto';
 
 export type PaymentActionState = {
@@ -307,55 +308,99 @@ export async function getPaymentsHistoryAction(memberId?: string): Promise<Payme
 export async function getCollectionSummaryAction(): Promise<{
   today: number;
   thisMonth: number;
+  todayCount: number;
+  thisMonthCount: number;
+  todayDateFormatted: string;
+  monthLabel: string;
 }> {
   try {
     const { gymId } = await requireGymAccess();
+    const { todayStr, monthStart, monthEnd, monthLabel } = getCurrentMonthRange();
+    const todayDateFormatted = formatDateLong(todayStr);
 
     if (isLocalPlaceholderMode()) {
       const db = readLocalDb();
       const gymPayments = db.payments.filter((p) => p.gym_id === gymId);
-      const now = new Date();
-      const todayStr = format(now, DATE_FORMAT.input);
-      const monthStart = format(startOfMonth(now), DATE_FORMAT.input);
-      const monthEnd = format(endOfMonth(now), DATE_FORMAT.input);
 
-      const todayTotal = gymPayments
-        .filter((p) => p.payment_date === todayStr)
-        .reduce((acc, p) => acc + Number(p.amount), 0);
+      const todayList = gymPayments.filter((p) => {
+        if (p.payment_date === todayStr) return true;
+        if (p.created_at) {
+          try {
+            const createdAtIst = new Intl.DateTimeFormat('en-CA', {
+              timeZone: 'Asia/Kolkata',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            }).format(new Date(p.created_at));
+            if (createdAtIst === todayStr) return true;
+          } catch {}
+        }
+        return false;
+      });
 
-      const monthTotal = gymPayments
-        .filter((p) => p.payment_date >= monthStart && p.payment_date <= monthEnd)
-        .reduce((acc, p) => acc + Number(p.amount), 0);
+      const monthList = gymPayments.filter(
+        (p) => p.payment_date >= monthStart && p.payment_date <= monthEnd
+      );
 
-      return { today: todayTotal, thisMonth: monthTotal };
+      const todayTotal = todayList.reduce((acc, p) => acc + Number(p.amount), 0);
+      const monthTotal = monthList.reduce((acc, p) => acc + Number(p.amount), 0);
+
+      return {
+        today: todayTotal,
+        thisMonth: monthTotal,
+        todayCount: todayList.length,
+        thisMonthCount: monthList.length,
+        todayDateFormatted,
+        monthLabel,
+      };
     }
 
     const supabase = await createClient();
 
-    const now = new Date();
-    const todayStr = format(now, DATE_FORMAT.input);
-    const monthStart = format(startOfMonth(now), DATE_FORMAT.input);
-    const monthEnd = format(endOfMonth(now), DATE_FORMAT.input);
+    const { data: monthPayments } = await supabase
+      .from('payments')
+      .select('amount, payment_date, created_at')
+      .eq('gym_id', gymId)
+      .gte('payment_date', monthStart)
+      .lte('payment_date', monthEnd);
 
-    const [{ data: todayPayments }, { data: monthPayments }] = await Promise.all([
-      supabase
-        .from('payments')
-        .select('amount')
-        .eq('gym_id', gymId)
-        .eq('payment_date', todayStr),
-      supabase
-        .from('payments')
-        .select('amount')
-        .eq('gym_id', gymId)
-        .gte('payment_date', monthStart)
-        .lte('payment_date', monthEnd),
-    ]);
+    const payments = monthPayments || [];
+    const todayList = payments.filter((p) => {
+      if (p.payment_date === todayStr) return true;
+      if (p.created_at) {
+        try {
+          const createdAtIst = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          }).format(new Date(p.created_at));
+          if (createdAtIst === todayStr) return true;
+        } catch {}
+      }
+      return false;
+    });
 
-    const todayTotal = (todayPayments || []).reduce((acc, p) => acc + Number(p.amount), 0);
-    const monthTotal = (monthPayments || []).reduce((acc, p) => acc + Number(p.amount), 0);
+    const todayTotal = todayList.reduce((acc, p) => acc + Number(p.amount), 0);
+    const monthTotal = payments.reduce((acc, p) => acc + Number(p.amount), 0);
 
-    return { today: todayTotal, thisMonth: monthTotal };
+    return {
+      today: todayTotal,
+      thisMonth: monthTotal,
+      todayCount: todayList.length,
+      thisMonthCount: payments.length,
+      todayDateFormatted,
+      monthLabel,
+    };
   } catch {
-    return { today: 0, thisMonth: 0 };
+    const { todayStr, monthLabel } = getCurrentMonthRange();
+    return {
+      today: 0,
+      thisMonth: 0,
+      todayCount: 0,
+      thisMonthCount: 0,
+      todayDateFormatted: formatDateLong(todayStr),
+      monthLabel,
+    };
   }
 }

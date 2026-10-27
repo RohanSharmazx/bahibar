@@ -112,7 +112,9 @@ export default async function DashboardPage() {
               {formatCurrencyCompact(collections.today)}
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Month: {formatCurrencyCompact(collections.thisMonth)}
+              {collections.today === 0 && collections.thisMonth > 0
+                ? `Month: ${formatCurrencyCompact(collections.thisMonth)} (earlier this month)`
+                : `Month: ${formatCurrencyCompact(collections.thisMonth)} (${collections.monthLabel})`}
             </p>
           </CardContent>
         </Card>

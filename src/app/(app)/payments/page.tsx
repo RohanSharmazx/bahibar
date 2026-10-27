@@ -39,29 +39,51 @@ export default async function PaymentsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="border-l-4 border-l-emerald-500">
           <CardHeader className="pb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Today&apos;s Collection
-            </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Today&apos;s Collection
+              </span>
+              <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                {collections.todayDateFormatted}
+              </span>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-extrabold text-emerald-600">
               {formatCurrency(collections.today)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">Cash & digital collections today</p>
+            <p className="text-xs text-slate-500 mt-1">
+              {collections.today > 0
+                ? `${collections.todayCount} fee payment${collections.todayCount > 1 ? 's' : ''} collected today`
+                : `No payments recorded yet for today (${collections.todayDateFormatted})`}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-sky-500">
           <CardHeader className="pb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              This Month&apos;s Collection
-            </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                This Month&apos;s Collection
+              </span>
+              <span className="text-[11px] font-medium text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full">
+                {collections.monthLabel}
+              </span>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-extrabold text-sky-600">
               {formatCurrency(collections.thisMonth)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">Calendar month cumulative income</p>
+            <p className="text-xs text-slate-500 mt-1">
+              {collections.thisMonth === 0
+                ? `No payments recorded in ${collections.monthLabel}`
+                : collections.today === collections.thisMonth
+                ? `All ${formatCurrency(collections.thisMonth)} collected today (${collections.thisMonthCount} transaction${collections.thisMonthCount > 1 ? 's' : ''})`
+                : collections.today === 0
+                ? `${formatCurrency(collections.thisMonth)} collected earlier this month (${collections.thisMonthCount} transaction${collections.thisMonthCount > 1 ? 's' : ''})`
+                : `${formatCurrency(collections.today)} today + ${formatCurrency(collections.thisMonth - collections.today)} earlier this month`}
+            </p>
           </CardContent>
         </Card>
       </div>
