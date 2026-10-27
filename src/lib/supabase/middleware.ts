@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getCleanSupabaseEnv, isLocalPlaceholderMode } from './env';
 const LOCAL_SESSION_COOKIE = 'gym_local_session';
 
 export async function updateSession(request: NextRequest) {
@@ -7,9 +8,8 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const isPlaceholder = url.includes('placeholder') || key.includes('placeholder') || !url.startsWith('https://');
+  const { url, key } = getCleanSupabaseEnv();
+  const isPlaceholder = isLocalPlaceholderMode();
 
   if (request.nextUrl.pathname.startsWith('/_next') || request.nextUrl.pathname.startsWith('/api')) {
     return supabaseResponse;
@@ -44,8 +44,8 @@ export async function updateSession(request: NextRequest) {
 
   // Cloud Supabase Mode
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    key,
     {
       cookies: {
         getAll() {

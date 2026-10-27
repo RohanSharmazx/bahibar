@@ -154,6 +154,12 @@ export async function loginAction(
   });
 
   if (error) {
+    if (error.message.toLowerCase().includes('invalid api key')) {
+      return {
+        error:
+          'Supabase API key is invalid or malformed. In Netlify Site Configuration > Environment Variables, please ensure NEXT_PUBLIC_SUPABASE_ANON_KEY is set to your project’s public "anon" key without wrapping quotes or trailing whitespace.',
+      };
+    }
     return { error: error.message };
   }
 
@@ -254,6 +260,12 @@ export async function registerAction(
   });
 
   if (signUpError) {
+    if (signUpError.message.toLowerCase().includes('invalid api key')) {
+      return {
+        error:
+          'Supabase API key is invalid or malformed. In Netlify Site Configuration > Environment Variables, please ensure NEXT_PUBLIC_SUPABASE_ANON_KEY is set to your project’s public "anon" key without wrapping quotes or trailing whitespace.',
+      };
+    }
     return { error: signUpError.message };
   }
 

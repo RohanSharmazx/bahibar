@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readLocalDb, writeLocalDb, isLocalPlaceholderMode } from '@/lib/local-db';
+import { readLocalDb, isLocalPlaceholderMode } from '@/lib/local-db';
 import { registerSchema, loginSchema } from '@/lib/validations/auth';
 
 describe('Local Database & Auth Validation', () => {
@@ -66,5 +66,28 @@ describe('Local Database & Auth Validation', () => {
     expect(sub).toBeDefined();
     expect(sub?.status).toBe('pilot');
     expect(sub?.plan_name).toBe('Free Pilot');
+  });
+
+  it('sanitizes Supabase environment variables and validates JWT format', async () => {
+    const { getCleanSupabaseEnv, isLocalPlaceholderMode } = await import('@/lib/supabase/env');
+    const origUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const origKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    try {
+      // Test 1: Quoted and whitespace-padded env vars
+      process.env.NEXT_PUBLIC_SUPABASE_URL = ' "https://xyz.supabase.co/" ';
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = " 'part1.part2.part3' ";
+      const clean = getCleanSupabaseEnv();
+      expect(clean.url).toBe('https://xyz.supabase.co');
+      expect(clean.key).toBe('part1.part2.part3');
+      expect(isLocalPlaceholderMode()).toBe(false);
+
+      // Test 2: Invalid non-JWT key falls back to local placeholder mode
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'invalid-token-without-three-jwt-parts';
+      expect(isLocalPlaceholderMode()).toBe(true);
+    } finally {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = origUrl;
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = origKey;
+    }
   });
 });
