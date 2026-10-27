@@ -13,27 +13,21 @@ export interface EvaluatedSubscription {
   rawSubscription: SoftwareSubscription | null;
 }
 
-export interface SubscriptionEvaluationOptions {
-  enforcePaywall?: boolean;
-}
-
 /**
  * Authoritatively evaluates subscription status against server-side current time.
- * Calculates lifecycle dates while respecting open source / free pilot configuration.
+ * Prevents client-side clock tampering or stale DB status fields from bypassing
+ * trial expiration or payment renewal requirements.
  */
 export function evaluateSubscription(
   sub: SoftwareSubscription | null | undefined,
-  currentDate: Date = new Date(),
-  options: SubscriptionEvaluationOptions = {}
+  currentDate: Date = new Date()
 ): EvaluatedSubscription {
-  const shouldEnforce = options.enforcePaywall ?? SAAS_CONFIG.enforcePaywall;
-
   if (!sub) {
     return {
-      effectiveStatus: shouldEnforce ? 'expired' : 'active',
-      isReadOnly: shouldEnforce,
-      canMutate: !shouldEnforce,
-      daysLeft: shouldEnforce ? 0 : 365,
+      effectiveStatus: 'expired',
+      isReadOnly: true,
+      canMutate: false,
+      daysLeft: 0,
       isExpiringSoon: false,
       inGracePeriod: false,
       graceDaysLeft: 0,
@@ -41,11 +35,24 @@ export function evaluateSubscription(
     };
   }
 
+  if (sub.status === 'pilot' || sub.plan_name === 'pilot' || sub.plan_name === 'Free Pilot') {
+    return {
+      effectiveStatus: 'active',
+      isReadOnly: false,
+      canMutate: true,
+      daysLeft: 365,
+      isExpiringSoon: false,
+      inGracePeriod: false,
+      graceDaysLeft: 0,
+      rawSubscription: sub,
+    };
+  }
+
   if (sub.status === 'cancelled') {
     return {
       effectiveStatus: 'cancelled',
-      isReadOnly: shouldEnforce,
-      canMutate: !shouldEnforce,
+      isReadOnly: true,
+      canMutate: false,
       daysLeft: 0,
       isExpiringSoon: false,
       inGracePeriod: false,
@@ -91,11 +98,11 @@ export function evaluateSubscription(
     };
   }
 
-  // Trial expired or grace period elapsed
+  // Trial expired or grace period elapsed -> strict Read-Only mode
   return {
     effectiveStatus: 'expired',
-    isReadOnly: shouldEnforce ? true : false,
-    canMutate: shouldEnforce ? false : true,
+    isReadOnly: true,
+    canMutate: false,
     daysLeft: 0,
     isExpiringSoon: false,
     inGracePeriod: false,
@@ -106,20 +113,13 @@ export function evaluateSubscription(
 
 /**
  * Server-side guard to assert active subscription before write operations.
- * In Open Source / Free Community Pilot mode, this is a non-blocking no-op.
- * Throws a user-friendly error if read-only mode is active and paywall enforcement is enabled.
+ * Throws a user-friendly error if read-only mode is active.
  */
 export function assertActiveSubscription(
   sub: SoftwareSubscription | null | undefined,
-  currentDate: Date = new Date(),
-  options: SubscriptionEvaluationOptions = {}
+  currentDate: Date = new Date()
 ): void {
-  const shouldEnforce = options.enforcePaywall ?? SAAS_CONFIG.enforcePaywall;
-  if (!shouldEnforce) {
-    return;
-  }
-
-  const evaluated = evaluateSubscription(sub, currentDate, { enforcePaywall: true });
+  const evaluated = evaluateSubscription(sub, currentDate);
   if (!evaluated.canMutate) {
     throw new Error(
       'Your BahiBar software subscription or 30-day trial has ended. ' +

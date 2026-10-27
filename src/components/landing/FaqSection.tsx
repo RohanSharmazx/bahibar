@@ -11,14 +11,9 @@ interface FaqItem {
 
 const FAQS: FaqItem[] = [
   {
-    question: 'How does the free hosted pilot work?',
+    question: 'How does the 30-day free trial work?',
     answer:
-      'When you create an account, BahiBar automatically gives you immediate unrestricted access to your gym workspace. You get full access to all features — member registration, plans, payment tracking, receipts, and data exports. No payment gateway, credit card, or bank details are required.',
-  },
-  {
-    question: 'Can I inspect the source code or self-host BahiBar on my own server?',
-    answer:
-      'Yes. BahiBar is open source. You can clone the repository from GitHub, run it locally on your computer with our zero-config offline database, or deploy it to your own cloud infrastructure (such as Vercel + Supabase) with full control over your data.',
+      'When you create an account, BahiBar automatically initializes a 30-day unrestricted free trial for your gym. You get immediate access to all features — member registration, plans, payment tracking, receipts, and data exports. No credit card is required to get started.',
   },
   {
     question: 'Can I use BahiBar from my phone at the gym reception desk?',
@@ -36,9 +31,9 @@ const FAQS: FaqItem[] = [
       'BahiBar uses automated calendar-month arithmetic with leap-year and month-end clamping (for example, Jan 31 + 1 month = Feb 28 or Feb 29 in leap years). Renewing an active membership automatically extends from the day after the current expiry date for uninterrupted continuity.',
   },
   {
-    question: 'What happens to my gym records if I decide to switch?',
+    question: 'What happens to my gym records if my trial or subscription expires?',
     answer:
-      'We follow a strict No Hostage Data policy. Your member database and transaction audit trail remain 100% intact. You can view and export your entire dataset to Excel CSV or JSON at any time without fees or restrictions.',
+      'We follow a strict No Hostage Data policy. If your trial ends, your member database and transaction audit trail remain 100% intact. You can view and export your entire dataset to Excel CSV or JSON at any time without fees.',
   },
   {
     question: 'Can I export full backups of my data?',

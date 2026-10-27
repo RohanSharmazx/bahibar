@@ -9,7 +9,6 @@ import { LanguageToggle, useI18n } from '@/lib/i18n/context';
 import { WorkspaceSelector } from './WorkspaceSelector';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { evaluateSubscription } from '@/lib/subscription';
-import { SAAS_CONFIG } from '@/lib/subscription-plans';
 import type { Gym, SoftwareSubscription } from '@/types';
 
 interface TopBarProps {
@@ -22,10 +21,14 @@ interface TopBarProps {
 export function TopBar({ gym, subscription, userName, accessibleGyms = [] }: TopBarProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  const isFreePilot =
+    subscription?.status === 'pilot' ||
+    subscription?.plan_name === 'Free Pilot' ||
+    process.env.NEXT_PUBLIC_FREE_PILOT !== 'false';
   const evaluated = evaluateSubscription(subscription);
-  const isTrial = evaluated.effectiveStatus === 'trial';
-  const isPastDue = evaluated.effectiveStatus === 'past_due';
-  const isExpired = evaluated.effectiveStatus === 'expired';
+  const isTrial = !isFreePilot && evaluated.effectiveStatus === 'trial';
+  const isPastDue = !isFreePilot && evaluated.effectiveStatus === 'past_due';
+  const isExpired = !isFreePilot && evaluated.effectiveStatus === 'expired';
   const daysLeftInTrial = evaluated.daysLeft;
 
   return (
@@ -69,48 +72,50 @@ export function TopBar({ gym, subscription, userName, accessibleGyms = [] }: Top
 
           {/* Right: Status + Actions */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {SAAS_CONFIG.isFreeOpenSourceMode ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200">
+            {isFreePilot && (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200"
+                title="Active Free Pilot Partner Workspace"
+              >
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span className="hidden sm:inline">Community</span> Pilot
+                <span className="hidden sm:inline">Free Pilot</span>
+                <span>Partner</span>
               </span>
-            ) : (
-              <>
-                {isTrial && (
-                  <Link
-                    href="/settings"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 border border-amber-200 hover:bg-amber-100/70 transition-colors"
-                    title={`${daysLeftInTrial} days remaining in software trial`}
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="hidden sm:inline">Trial:</span>
-                    <span>{daysLeftInTrial}d left</span>
-                  </Link>
-                )}
+            )}
 
-                {isPastDue && (
-                  <Link
-                    href="/settings"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-800 border border-orange-200 hover:bg-orange-100 transition-colors"
-                    title={`${evaluated.graceDaysLeft} days remaining in renewal grace period`}
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-ping" />
-                    <span className="hidden sm:inline">Grace Period:</span>
-                    <span>{evaluated.graceDaysLeft}d</span>
-                  </Link>
-                )}
+            {isTrial && (
+              <Link
+                href="/settings"
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 border border-amber-200 hover:bg-amber-100/70 transition-colors"
+                title={`${daysLeftInTrial} days remaining in software trial`}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                <span className="hidden sm:inline">Trial:</span>
+                <span>{daysLeftInTrial}d left</span>
+              </Link>
+            )}
 
-                {isExpired && (
-                  <Link
-                    href="/settings"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer"
-                    title="Trial ended. Click to renew and restore write access."
-                  >
-                    <ShieldAlert className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Read-Only</span> Mode
-                  </Link>
-                )}
-              </>
+            {isPastDue && (
+              <Link
+                href="/settings"
+                className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-800 border border-orange-200 hover:bg-orange-100 transition-colors"
+                title={`${evaluated.graceDaysLeft} days remaining in renewal grace period`}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-ping" />
+                <span className="hidden sm:inline">Grace Period:</span>
+                <span>{evaluated.graceDaysLeft}d</span>
+              </Link>
+            )}
+
+            {isExpired && (
+              <Link
+                href="/settings"
+                className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer"
+                title="Trial ended. Click to renew and restore write access."
+              >
+                <ShieldAlert className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Read-Only</span> Mode
+              </Link>
             )}
 
             {/* Language Toggle in TopBar */}

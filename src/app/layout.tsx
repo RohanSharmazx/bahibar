@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { I18nProvider } from "@/lib/i18n/context";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import type { Locale } from "@/lib/i18n/types";
 import "./globals.css";
 
@@ -28,8 +29,14 @@ export const metadata: Metadata = {
   publisher: "BahiBar",
   manifest: "/manifest.json",
   icons: {
-    icon: "/brand/bahibar-icon.svg",
-    apple: "/brand/bahibar-icon.svg",
+    icon: [
+      { url: "/brand/bahibar-icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   appleWebApp: {
     capable: true,
@@ -58,6 +65,7 @@ export const viewport: Viewport = {
   themeColor: "#087FDB",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 5,
 };
 
 export default async function RootLayout({
@@ -77,7 +85,10 @@ export default async function RootLayout({
   return (
     <html lang={initialLocale} className="h-full antialiased">
       <body className="min-h-full flex flex-col font-sans">
-        <I18nProvider initialLocale={initialLocale}>{children}</I18nProvider>
+        <I18nProvider initialLocale={initialLocale}>
+          {children}
+          <ServiceWorkerRegister />
+        </I18nProvider>
       </body>
     </html>
   );

@@ -72,13 +72,15 @@ export async function createGymAction(
       created_at: now,
     });
 
+    const pilotEnd = addDays(today, 365);
+
     db.software_subscriptions.push({
       id: crypto.randomUUID(),
       gym_id: gymId,
-      plan_name: 'trial',
-      status: 'trial',
+      plan_name: 'Free Pilot',
+      status: 'pilot',
       start_date: format(today, DATE_FORMAT.input),
-      end_date: format(trialEnd, DATE_FORMAT.input),
+      end_date: format(pilotEnd, DATE_FORMAT.input),
       created_at: now,
       updated_at: now,
     });
@@ -118,14 +120,14 @@ export async function createGymAction(
   }
 
   const today = new Date();
-  const trialEnd = addDays(today, DEFAULT_TRIAL_DAYS);
+  const pilotEnd = addDays(today, 365);
 
   const { error: subError } = await supabase.from('software_subscriptions').insert({
     gym_id: gymId,
-    plan_name: 'trial',
-    status: 'trial',
+    plan_name: 'Free Pilot',
+    status: 'pilot',
     start_date: format(today, DATE_FORMAT.input),
-    end_date: format(trialEnd, DATE_FORMAT.input),
+    end_date: format(pilotEnd, DATE_FORMAT.input),
   });
 
   if (subError) {

@@ -82,8 +82,12 @@ export function MobileNavDrawer({
 
   if (!isOpen) return null;
 
-  const isTrial = subscription?.status === 'trial';
-  const isExpired = subscription?.status === 'expired';
+  const isFreePilot =
+    subscription?.status === 'pilot' ||
+    subscription?.plan_name === 'Free Pilot' ||
+    process.env.NEXT_PUBLIC_FREE_PILOT !== 'false';
+  const isTrial = !isFreePilot && subscription?.status === 'trial';
+  const isExpired = !isFreePilot && subscription?.status === 'expired';
   let daysLeftInTrial = 0;
   if (isTrial && subscription?.end_date) {
     daysLeftInTrial = Math.max(0, differenceInDays(parseISO(subscription.end_date), new Date()));
@@ -135,6 +139,16 @@ export function MobileNavDrawer({
           </div>
 
           {/* Software Subscription Indicator */}
+          {isFreePilot && (
+            <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-900">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span>Free Pilot Partner • Full Access</span>
+              </div>
+              <span className="text-[10px] uppercase font-bold text-emerald-700">Pilot</span>
+            </div>
+          )}
+
           {isTrial && (
             <Link
               href="/settings"

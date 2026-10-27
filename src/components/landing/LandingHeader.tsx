@@ -43,14 +43,6 @@ export function LandingHeader({ userLoggedIn }: LandingHeaderProps) {
               {link.label}
             </a>
           ))}
-          <a
-            href="https://github.com/RohanSharmazx/bahibar"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#087FDB] transition-colors py-1 inline-flex items-center gap-1 text-slate-500 hover:text-slate-900"
-          >
-            GitHub
-          </a>
         </nav>
 
         {/* Desktop Actions */}

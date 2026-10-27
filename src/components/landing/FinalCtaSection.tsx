@@ -17,7 +17,7 @@ export function FinalCtaSection() {
         {/* Pill */}
         <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-[#12BBDD] border border-white/10 backdrop-blur-xs">
           <span className="flex h-2 w-2 rounded-full bg-[#12BBDD] animate-pulse" />
-          <span>Free Hosted Pilot • Open Source on GitHub</span>
+          <span>30-Day Unrestricted Free Trial</span>
         </div>
 
         {/* Headline & Body */}
@@ -40,14 +40,12 @@ export function FinalCtaSection() {
             <ArrowRight className="h-4 w-4" />
           </Link>
 
-          <a
-            href="https://github.com/RohanSharmazx/bahibar"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/login"
             className="w-full sm:w-auto inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-semibold text-white hover:bg-white/10 active:bg-white/15 transition-all cursor-pointer min-h-[48px] tap-feedback"
           >
-            <span>View Source on GitHub</span>
-          </a>
+            <span>{t('common.signIn')}</span>
+          </Link>
         </div>
 
         {/* Trust Badges */}

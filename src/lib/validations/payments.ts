@@ -25,27 +25,42 @@ export const paymentSchema = z.object({
     .or(z.literal('')),
 });
 
-export const renewalSchema = z.object({
-  plan_id: z
-    .string()
-    .min(1, 'Please select a membership plan'),
-  start_date: z
-    .string()
-    .min(1, 'Start date is required'),
-  agreed_price: z
-    .number()
-    .min(0, 'Price cannot be negative'),
-  payment_amount: z
-    .number()
-    .min(0, 'Payment cannot be negative')
-    .optional(),
-  payment_method: z
-    .enum(['cash', 'upi', 'card', 'other'])
-    .optional(),
-  payment_date: z
-    .string()
-    .optional(),
-});
+export const renewalSchema = z
+  .object({
+    plan_id: z
+      .string()
+      .min(1, 'Please select a membership plan'),
+    start_date: z
+      .string()
+      .min(1, 'Start date is required'),
+    agreed_price: z
+      .number()
+      .min(0, 'Price cannot be negative'),
+    payment_amount: z
+      .number()
+      .min(0, 'Payment cannot be negative')
+      .optional(),
+    payment_method: z
+      .enum(['cash', 'upi', 'card', 'other'])
+      .optional()
+      .nullable()
+      .or(z.literal('')),
+    payment_date: z
+      .string()
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.payment_amount && data.payment_amount > 0) {
+        return Boolean(data.payment_method && data.payment_method.length > 0);
+      }
+      return true;
+    },
+    {
+      message: 'Payment method is required when a payment amount is entered',
+      path: ['payment_method'],
+    }
+  );
 
 export type PaymentInput = z.infer<typeof paymentSchema>;
 export type RenewalInput = z.infer<typeof renewalSchema>;
