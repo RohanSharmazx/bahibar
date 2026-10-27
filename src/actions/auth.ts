@@ -20,6 +20,7 @@ import crypto from 'crypto';
 
 export type ActionState = {
   success?: boolean;
+  message?: string;
   error?: string;
   fieldErrors?: Record<string, string[]>;
   devResetUrl?: string;
@@ -202,7 +203,7 @@ export async function registerAction(
 
   // Cloud Supabase Mode
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -212,8 +213,24 @@ export async function registerAction(
     },
   });
 
-  if (error) {
-    return { error: error.message };
+  if (signUpError) {
+    return { error: signUpError.message };
+  }
+
+  // If a session was not automatically established, attempt to sign in to set cookies
+  if (!signUpData?.session) {
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      // Email confirmation is required by Supabase project configuration
+      return {
+        success: true,
+        message: 'Account registered successfully! A confirmation link has been sent to your email. Please verify your email, then sign in to complete gym setup.',
+      };
+    }
   }
 
   redirect('/onboarding');

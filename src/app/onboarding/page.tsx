@@ -64,7 +64,17 @@ function OnboardingContent() {
           {state?.error && (
             <div className="mb-6">
               <Alert variant="danger" title="Gym Setup Error">
-                {state.error}
+                <p>{state.error}</p>
+                {state.error.includes('Authentication required') && (
+                  <div className="mt-3">
+                    <Link
+                      href="/login?redirectTo=/onboarding"
+                      className="inline-flex items-center text-xs font-semibold text-rose-900 hover:text-rose-950 underline"
+                    >
+                      Sign In to Complete Setup →
+                    </Link>
+                  </div>
+                )}
               </Alert>
             </div>
           )}

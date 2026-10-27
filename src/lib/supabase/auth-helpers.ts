@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { createClient } from './server';
-import { isLocalPlaceholderMode, readLocalDb } from '@/lib/local-db';
+import { isLocalPlaceholderMode, readLocalDb, writeLocalDb } from '@/lib/local-db';
 import { assertActiveSubscription } from '@/lib/subscription';
 import type { Gym, GymStaff, SoftwareSubscription } from '@/types';
 
@@ -26,7 +26,20 @@ export async function getUser() {
     try {
       const session = JSON.parse(sessionCookie.value) as LocalSession;
       const db = readLocalDb();
-      const user = db.users.find((u) => u.id === session.userId);
+      let user = db.users.find((u) => u.id === session.userId);
+      if (!user && session.userId && session.email) {
+        user = {
+          id: session.userId,
+          email: session.email,
+          password_hash: '',
+          full_name: session.fullName || 'Gym Owner',
+          created_at: new Date().toISOString(),
+        };
+        db.users.push(user);
+        try {
+          writeLocalDb(db);
+        } catch {}
+      }
       if (!user) return null;
 
       return {
@@ -61,7 +74,24 @@ export async function getUserGymStaff(preferredGymId?: string): Promise<GymStaff
 
   if (isLocalPlaceholderMode()) {
     const db = readLocalDb();
-    const staffEntries = db.gym_staff.filter((s) => s.user_id === user.id);
+    let staffEntries = db.gym_staff.filter((s) => s.user_id === user.id);
+    if (staffEntries.length === 0 && activeGymId) {
+      const gym = db.gyms.find((g) => g.id === activeGymId);
+      if (gym) {
+        const entry: GymStaff = {
+          id: crypto.randomUUID(),
+          gym_id: activeGymId,
+          user_id: user.id,
+          role: 'owner',
+          created_at: new Date().toISOString(),
+        };
+        db.gym_staff.push(entry);
+        try {
+          writeLocalDb(db);
+        } catch {}
+        staffEntries = [entry];
+      }
+    }
     if (staffEntries.length === 0) return null;
 
     if (activeGymId) {
