@@ -74,16 +74,20 @@ describe('Local Database & Auth Validation', () => {
     const origKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     try {
-      // Test 1: Quoted and whitespace-padded env vars
+      // Test 1: Quoted and whitespace-padded env vars with matching project ref
       process.env.NEXT_PUBLIC_SUPABASE_URL = ' "https://xyz.supabase.co/" ';
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = " 'part1.part2.part3' ";
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = " 'eyJhbGciOiJIUzI1NiJ9.eyJyZWYiOiJ4eXoifQ.signature' ";
       const clean = getCleanSupabaseEnv();
       expect(clean.url).toBe('https://xyz.supabase.co');
-      expect(clean.key).toBe('part1.part2.part3');
+      expect(clean.key).toBe('eyJhbGciOiJIUzI1NiJ9.eyJyZWYiOiJ4eXoifQ.signature');
       expect(isLocalPlaceholderMode()).toBe(false);
 
       // Test 2: Invalid non-JWT key falls back to local placeholder mode
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'invalid-token-without-three-jwt-parts';
+      expect(isLocalPlaceholderMode()).toBe(true);
+
+      // Test 3: Mismatched project ref falls back to safe local mode
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiJ9.eyJyZWYiOiJkaWZmZXJlbnQtcHJvamVjdCJ9.signature';
       expect(isLocalPlaceholderMode()).toBe(true);
     } finally {
       process.env.NEXT_PUBLIC_SUPABASE_URL = origUrl;

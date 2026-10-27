@@ -11,6 +11,7 @@ import {
 } from '@/lib/validations/auth';
 import {
   isLocalPlaceholderMode,
+  getCleanSupabaseEnv,
   readLocalDb,
   writeLocalDb,
   type LocalUser,
@@ -155,9 +156,14 @@ export async function loginAction(
 
   if (error) {
     if (error.message.toLowerCase().includes('invalid api key')) {
+      const { urlRef, keyRef } = getCleanSupabaseEnv();
+      const mismatch =
+        urlRef && keyRef && urlRef !== keyRef
+          ? ` (Mismatch: URL project ref is "${urlRef}", but key is for "${keyRef}")`
+          : '';
       return {
         error:
-          'Supabase API key is invalid or malformed. In Netlify Site Configuration > Environment Variables, please ensure NEXT_PUBLIC_SUPABASE_ANON_KEY is set to your project’s public "anon" key without wrapping quotes or trailing whitespace.',
+          `Supabase API key is invalid or malformed${mismatch}. In Netlify Site Configuration > Environment Variables, please verify NEXT_PUBLIC_SUPABASE_ANON_KEY matches your project's public "anon" key and re-deploy.`,
       };
     }
     return { error: error.message };
@@ -261,9 +267,14 @@ export async function registerAction(
 
   if (signUpError) {
     if (signUpError.message.toLowerCase().includes('invalid api key')) {
+      const { urlRef, keyRef } = getCleanSupabaseEnv();
+      const mismatch =
+        urlRef && keyRef && urlRef !== keyRef
+          ? ` (Mismatch: URL project ref is "${urlRef}", but key is for "${keyRef}")`
+          : '';
       return {
         error:
-          'Supabase API key is invalid or malformed. In Netlify Site Configuration > Environment Variables, please ensure NEXT_PUBLIC_SUPABASE_ANON_KEY is set to your project’s public "anon" key without wrapping quotes or trailing whitespace.',
+          `Supabase API key is invalid or malformed${mismatch}. In Netlify Site Configuration > Environment Variables, please verify NEXT_PUBLIC_SUPABASE_ANON_KEY matches your project's public "anon" key and re-deploy.`,
       };
     }
     return { error: signUpError.message };
