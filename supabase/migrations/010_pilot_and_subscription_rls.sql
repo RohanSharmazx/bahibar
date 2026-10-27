@@ -46,3 +46,12 @@ CREATE POLICY "Users can update own gym saas orders"
 CREATE POLICY "Users can insert own gym saas payments"
   ON saas_subscription_payments FOR INSERT
   WITH CHECK (gym_id IN (SELECT user_gym_ids()));
+
+-- 4. Allow 'pilot' status in software_subscriptions for free pilot program
+ALTER TABLE software_subscriptions
+  DROP CONSTRAINT IF EXISTS software_subscriptions_status_check;
+
+ALTER TABLE software_subscriptions
+  ADD CONSTRAINT software_subscriptions_status_check
+  CHECK (status IN ('trial', 'active', 'expired', 'cancelled', 'pilot'));
+

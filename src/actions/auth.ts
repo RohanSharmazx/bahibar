@@ -15,7 +15,7 @@ import {
   writeLocalDb,
   type LocalUser,
 } from '@/lib/local-db';
-import { LOCAL_SESSION_COOKIE, ACTIVE_GYM_COOKIE, type LocalSession } from '@/lib/supabase/auth-helpers';
+import { LOCAL_SESSION_COOKIE, ACTIVE_GYM_COOKIE, LOCAL_WORKSPACES_COOKIE, type LocalSession } from '@/lib/supabase/auth-helpers';
 import crypto from 'crypto';
 
 export type ActionState = {
@@ -89,11 +89,51 @@ export async function loginAction(
       maxAge: 60 * 60 * 24 * 30, // 30 days
     });
 
-    // Check if user has gym onboarded
-    const staff = db.gym_staff.find((s) => s.user_id === user.id);
+    // Check if user has gym onboarded or saved in local workspaces cookie
+    const workspacesCookie = cookieStore.get(LOCAL_WORKSPACES_COOKIE)?.value;
+    let cookieGyms: any[] = [];
+    if (workspacesCookie) {
+      try {
+        cookieGyms = JSON.parse(workspacesCookie);
+      } catch {}
+    }
+
+    let staff = db.gym_staff.find((s) => s.user_id === user.id);
+    if (!staff && cookieGyms.length > 0) {
+      staff = {
+        id: crypto.randomUUID(),
+        gym_id: cookieGyms[0].id,
+        user_id: user.id,
+        role: 'owner',
+        created_at: new Date().toISOString(),
+      };
+      db.gym_staff.push(staff);
+      for (const cg of cookieGyms) {
+        if (!db.gyms.some((g) => g.id === cg.id)) {
+          db.gyms.push(cg);
+        }
+      }
+      try {
+        writeLocalDb(db);
+      } catch {}
+    }
+
     if (!staff) {
       cookieStore.delete(ACTIVE_GYM_COOKIE);
       redirect('/onboarding');
+    }
+
+    // Update LOCAL_WORKSPACES_COOKIE from db if user has gym entries
+    const userGymIds = new Set(db.gym_staff.filter((s) => s.user_id === user.id).map((s) => s.gym_id));
+    const userGyms = db.gyms.filter((g) => userGymIds.has(g.id));
+    if (userGyms.length > 0) {
+      cookieStore.set(LOCAL_WORKSPACES_COOKIE, JSON.stringify(userGyms), {
+        httpOnly: true,
+        secure: isHttps,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30,
+      });
     }
 
     // Set or preserve active gym workspace for this user
@@ -240,6 +280,7 @@ export async function logoutAction(): Promise<void> {
   const cookieStore = await cookies();
   if (isLocalPlaceholderMode()) {
     cookieStore.delete(LOCAL_SESSION_COOKIE);
+    cookieStore.delete(LOCAL_WORKSPACES_COOKIE);
   } else {
     const supabase = await createClient();
     await supabase.auth.signOut();

@@ -54,4 +54,17 @@ describe('Local Database & Auth Validation', () => {
     });
     expect(invalidEmail.success).toBe(false);
   });
+
+  it('exports LOCAL_WORKSPACES_COOKIE for serverless resilience', async () => {
+    const { LOCAL_WORKSPACES_COOKIE, LOCAL_SESSION_COOKIE, ACTIVE_GYM_COOKIE, getGymSoftwareSubscription } = await import('@/lib/supabase/auth-helpers');
+    expect(LOCAL_WORKSPACES_COOKIE).toBe('gym_local_workspaces');
+    expect(LOCAL_SESSION_COOKIE).toBe('gym_local_session');
+    expect(ACTIVE_GYM_COOKIE).toBe('bahibar_active_gym');
+
+    // Free pilot fallback ensures software subscription is non-null
+    const sub = await getGymSoftwareSubscription('test-nonexistent-gym-id');
+    expect(sub).toBeDefined();
+    expect(sub?.status).toBe('pilot');
+    expect(sub?.plan_name).toBe('Free Pilot');
+  });
 });

@@ -1,6 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import {
   requireGymAccess,
@@ -9,6 +9,7 @@ import {
   getUserAccessibleGyms,
   ACTIVE_GYM_COOKIE,
   LOCAL_SESSION_COOKIE,
+  LOCAL_WORKSPACES_COOKIE,
 } from '@/lib/supabase/auth-helpers';
 import { gymSchema } from '@/lib/validations/gym';
 import { redirect } from 'next/navigation';
@@ -51,7 +52,7 @@ export async function createGymAction(
     const gymId = crypto.randomUUID();
     const now = new Date().toISOString();
     const today = new Date();
-    const trialEnd = addDays(today, DEFAULT_TRIAL_DAYS);
+    const pilotEnd = addDays(today, 365);
 
     const newGym: Gym = {
       id: gymId,
@@ -72,8 +73,6 @@ export async function createGymAction(
       created_at: now,
     });
 
-    const pilotEnd = addDays(today, 365);
-
     db.software_subscriptions.push({
       id: crypto.randomUUID(),
       gym_id: gymId,
@@ -85,9 +84,56 @@ export async function createGymAction(
       updated_at: now,
     });
 
-    writeLocalDb(db);
+    // Provide default starter membership plan so adding members is immediately possible
+    if (!db.membership_plans.some((p) => p.gym_id === gymId)) {
+      db.membership_plans.push({
+        id: crypto.randomUUID(),
+        gym_id: gymId,
+        name: 'Monthly Regular',
+        duration_value: 1,
+        duration_unit: 'months',
+        price: 1000,
+        description: 'Standard 1-Month Membership Plan',
+        is_active: true,
+        created_at: now,
+        updated_at: now,
+      });
+    }
+
+    try {
+      writeLocalDb(db);
+    } catch {}
+
+    // Persist workspace in secure cookie for serverless container resilience
     const cookieStore = await cookies();
-    cookieStore.set(ACTIVE_GYM_COOKIE, gymId, { path: '/', sameSite: 'lax' });
+    const existingWorkspacesCookie = cookieStore.get(LOCAL_WORKSPACES_COOKIE)?.value;
+    let localWorkspaces: Gym[] = [];
+    if (existingWorkspacesCookie) {
+      try {
+        localWorkspaces = JSON.parse(existingWorkspacesCookie);
+      } catch {}
+    }
+    localWorkspaces = localWorkspaces.filter((g) => g.id !== gymId);
+    localWorkspaces.push(newGym);
+
+    const headerList = await headers();
+    const isHttps = headerList.get('x-forwarded-proto') === 'https';
+
+    cookieStore.set(LOCAL_WORKSPACES_COOKIE, JSON.stringify(localWorkspaces), {
+      httpOnly: true,
+      secure: isHttps,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+
+    cookieStore.set(ACTIVE_GYM_COOKIE, gymId, {
+      path: '/',
+      sameSite: 'lax',
+      secure: isHttps,
+      maxAge: 60 * 60 * 24 * 30,
+    });
+
     redirect('/dashboard');
   }
 
@@ -132,10 +178,42 @@ export async function createGymAction(
 
   if (subError) {
     console.error('Failed to initialize trial software subscription:', subError.message);
+    // If 'pilot' status was rejected by a database check constraint, retry with 'active'
+    if (subError.message?.includes('check') || subError.message?.includes('status')) {
+      await supabase.from('software_subscriptions').insert({
+        gym_id: gymId,
+        plan_name: 'Free Pilot',
+        status: 'active',
+        start_date: format(today, DATE_FORMAT.input),
+        end_date: format(pilotEnd, DATE_FORMAT.input),
+      });
+    }
   }
 
+  // Auto-seed a starter plan so the new gym can register members right away
+  try {
+    await supabase.from('membership_plans').insert({
+      gym_id: gymId,
+      name: 'Monthly Regular',
+      duration_value: 1,
+      duration_unit: 'months',
+      price: 1000,
+      description: 'Standard 1-Month Membership Plan',
+      is_active: true,
+    });
+  } catch {}
+
   const cookieStore = await cookies();
-  cookieStore.set(ACTIVE_GYM_COOKIE, gymId, { path: '/', sameSite: 'lax' });
+  const headerList = await headers();
+  const isHttps = headerList.get('x-forwarded-proto') === 'https';
+
+  cookieStore.set(ACTIVE_GYM_COOKIE, gymId, {
+    path: '/',
+    sameSite: 'lax',
+    secure: isHttps,
+    maxAge: 60 * 60 * 24 * 30,
+  });
+
   redirect('/dashboard');
 }
 
@@ -170,6 +248,37 @@ export async function updateGymAction(
         gym.updated_at = new Date().toISOString();
         writeLocalDb(db);
       }
+
+      // Keep LOCAL_WORKSPACES_COOKIE updated
+      const cookieStore = await cookies();
+      const existingCookie = cookieStore.get(LOCAL_WORKSPACES_COOKIE)?.value;
+      if (existingCookie) {
+        try {
+          let cookieGyms = JSON.parse(existingCookie) as Gym[];
+          cookieGyms = cookieGyms.map((g) =>
+            g.id === gymId
+              ? {
+                  ...g,
+                  name: parsed.data.name,
+                  owner_name: parsed.data.owner_name,
+                  contact_number: parsed.data.contact_number,
+                  address: parsed.data.address || null,
+                  updated_at: new Date().toISOString(),
+                }
+              : g
+          );
+          const headerList = await headers();
+          const isHttps = headerList.get('x-forwarded-proto') === 'https';
+          cookieStore.set(LOCAL_WORKSPACES_COOKIE, JSON.stringify(cookieGyms), {
+            httpOnly: true,
+            secure: isHttps,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30,
+          });
+        } catch {}
+      }
+
       revalidatePath('/settings');
       revalidatePath('/dashboard');
       return { success: true };
@@ -225,8 +334,35 @@ export async function getCurrentGymData(): Promise<{
 
   if (isLocalPlaceholderMode()) {
     const db = readLocalDb();
-    const gym = db.gyms.find((g) => g.id === staff.gym_id) || null;
-    const rawSubscription = db.software_subscriptions.find((s) => s.gym_id === staff.gym_id) || null;
+    let gym = db.gyms.find((g) => g.id === staff.gym_id) || null;
+
+    if (!gym) {
+      const cookieStore = await cookies();
+      const workspacesCookie = cookieStore.get(LOCAL_WORKSPACES_COOKIE)?.value;
+      if (workspacesCookie) {
+        try {
+          const cookieGyms = JSON.parse(workspacesCookie) as Gym[];
+          gym = cookieGyms.find((g) => g.id === staff.gym_id) || cookieGyms[0] || null;
+        } catch {}
+      }
+    }
+
+    let rawSubscription = db.software_subscriptions.find((s) => s.gym_id === staff.gym_id) || null;
+    if (!rawSubscription && gym) {
+      const todayStr = format(new Date(), DATE_FORMAT.input);
+      const nextYearStr = format(addDays(new Date(), 365), DATE_FORMAT.input);
+      rawSubscription = {
+        id: 'sub-' + gym.id,
+        gym_id: gym.id,
+        plan_name: 'Free Pilot',
+        status: 'pilot',
+        start_date: todayStr,
+        end_date: nextYearStr,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
+
     const subscription = rawSubscription
       ? { ...rawSubscription, status: evaluateSubscription(rawSubscription).effectiveStatus }
       : null;
@@ -247,8 +383,24 @@ export async function getCurrentGymData(): Promise<{
     supabase.from('software_subscriptions').select('*').eq('gym_id', staff.gym_id).single(),
   ]);
 
-  const subscription = rawSubscription
-    ? { ...(rawSubscription as SoftwareSubscription), status: evaluateSubscription(rawSubscription as SoftwareSubscription).effectiveStatus }
+  let resolvedSubscription = rawSubscription;
+  if (!resolvedSubscription && gym) {
+    const todayStr = format(new Date(), DATE_FORMAT.input);
+    const nextYearStr = format(addDays(new Date(), 365), DATE_FORMAT.input);
+    resolvedSubscription = {
+      id: 'sub-' + (gym as Gym).id,
+      gym_id: (gym as Gym).id,
+      plan_name: 'Free Pilot',
+      status: 'pilot',
+      start_date: todayStr,
+      end_date: nextYearStr,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  const subscription = resolvedSubscription
+    ? { ...(resolvedSubscription as SoftwareSubscription), status: evaluateSubscription(resolvedSubscription as SoftwareSubscription).effectiveStatus }
     : null;
 
   return {
@@ -348,6 +500,24 @@ export async function deleteGymAction(
       db.gyms = db.gyms.filter((g) => g.id !== gymId);
 
       writeLocalDb(db);
+
+      const cookieStore = await cookies();
+      const existingCookie = cookieStore.get(LOCAL_WORKSPACES_COOKIE)?.value;
+      if (existingCookie) {
+        try {
+          let cookieGyms = JSON.parse(existingCookie) as Gym[];
+          cookieGyms = cookieGyms.filter((g) => g.id !== gymId);
+          const headerList = await headers();
+          const isHttps = headerList.get('x-forwarded-proto') === 'https';
+          cookieStore.set(LOCAL_WORKSPACES_COOKIE, JSON.stringify(cookieGyms), {
+            httpOnly: true,
+            secure: isHttps,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30,
+          });
+        } catch {}
+      }
     } else {
       const supabase = await createClient();
 

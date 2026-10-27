@@ -6,6 +6,7 @@ import type { Gym, GymStaff, SoftwareSubscription } from '@/types';
 
 export const LOCAL_SESSION_COOKIE = 'gym_local_session';
 export const ACTIVE_GYM_COOKIE = 'bahibar_active_gym';
+export const LOCAL_WORKSPACES_COOKIE = 'gym_local_workspaces';
 
 export interface LocalSession {
   userId: string;
@@ -74,6 +75,52 @@ export async function getUserGymStaff(preferredGymId?: string): Promise<GymStaff
 
   if (isLocalPlaceholderMode()) {
     const db = readLocalDb();
+
+    // 1. Rehydrate workspaces from LOCAL_WORKSPACES_COOKIE if missing on ephemeral serverless containers
+    const workspacesCookie = cookieStore.get(LOCAL_WORKSPACES_COOKIE)?.value;
+    let cookieGyms: Gym[] = [];
+    if (workspacesCookie) {
+      try {
+        cookieGyms = JSON.parse(workspacesCookie) as Gym[];
+        let dbChanged = false;
+        for (const cGym of cookieGyms) {
+          if (!db.gyms.some((g) => g.id === cGym.id)) {
+            db.gyms.push(cGym);
+            dbChanged = true;
+          }
+          if (!db.gym_staff.some((s) => s.gym_id === cGym.id && s.user_id === user.id)) {
+            db.gym_staff.push({
+              id: crypto.randomUUID(),
+              gym_id: cGym.id,
+              user_id: user.id,
+              role: 'owner',
+              created_at: cGym.created_at || new Date().toISOString(),
+            });
+            dbChanged = true;
+          }
+          if (!db.software_subscriptions.some((sub) => sub.gym_id === cGym.id)) {
+            const now = new Date();
+            db.software_subscriptions.push({
+              id: crypto.randomUUID(),
+              gym_id: cGym.id,
+              plan_name: 'Free Pilot',
+              status: 'pilot',
+              start_date: now.toISOString().split('T')[0],
+              end_date: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              created_at: now.toISOString(),
+              updated_at: now.toISOString(),
+            });
+            dbChanged = true;
+          }
+        }
+        if (dbChanged) {
+          try {
+            writeLocalDb(db);
+          } catch {}
+        }
+      } catch {}
+    }
+
     let staffEntries = db.gym_staff.filter((s) => s.user_id === user.id);
     if (staffEntries.length === 0 && activeGymId) {
       const gym = db.gyms.find((g) => g.id === activeGymId);
@@ -92,6 +139,19 @@ export async function getUserGymStaff(preferredGymId?: string): Promise<GymStaff
         staffEntries = [entry];
       }
     }
+
+    // Fallback: If still no staff entry in db but cookieGyms exists, construct virtual owner staff entry
+    if (staffEntries.length === 0 && cookieGyms.length > 0) {
+      const targetGym = activeGymId ? (cookieGyms.find((g) => g.id === activeGymId) || cookieGyms[0]) : cookieGyms[0];
+      return {
+        id: crypto.randomUUID(),
+        gym_id: targetGym.id,
+        user_id: user.id,
+        role: 'owner',
+        created_at: targetGym.created_at || new Date().toISOString(),
+      };
+    }
+
     if (staffEntries.length === 0) return null;
 
     if (activeGymId) {
@@ -125,13 +185,35 @@ export async function getUserAccessibleGyms(): Promise<{ gym: Gym; role: string 
   const user = await getUser();
   if (!user) return [];
 
+  const cookieStore = await cookies();
+
   if (isLocalPlaceholderMode()) {
     const db = readLocalDb();
+    const workspacesCookie = cookieStore.get(LOCAL_WORKSPACES_COOKIE)?.value;
+    let cookieGyms: Gym[] = [];
+    if (workspacesCookie) {
+      try {
+        cookieGyms = JSON.parse(workspacesCookie) as Gym[];
+      } catch {}
+    }
+
     const staffEntries = db.gym_staff.filter((s) => s.user_id === user.id);
     const gymMap = new Map(db.gyms.map((g) => [g.id, g]));
-    return staffEntries
+    for (const cg of cookieGyms) {
+      if (!gymMap.has(cg.id)) {
+        gymMap.set(cg.id, cg);
+      }
+    }
+
+    const accessible = staffEntries
       .map((s) => ({ gym: gymMap.get(s.gym_id)!, role: s.role }))
       .filter((item) => Boolean(item.gym));
+
+    if (accessible.length === 0 && cookieGyms.length > 0) {
+      return cookieGyms.map((g) => ({ gym: g, role: 'owner' }));
+    }
+
+    return accessible;
   }
 
   const supabase = await createClient();
@@ -190,7 +272,21 @@ export async function requireGymAccess(): Promise<{ userId: string; gymId: strin
 export async function getGymSoftwareSubscription(gymId: string): Promise<SoftwareSubscription | null> {
   if (isLocalPlaceholderMode()) {
     const db = readLocalDb();
-    return db.software_subscriptions.find((s) => s.gym_id === gymId) || null;
+    const existing = db.software_subscriptions.find((s) => s.gym_id === gymId);
+    if (existing) return existing;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const nextYearStr = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    return {
+      id: 'sub-' + gymId,
+      gym_id: gymId,
+      plan_name: 'Free Pilot',
+      status: 'pilot',
+      start_date: todayStr,
+      end_date: nextYearStr,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
   }
 
   const supabase = await createClient();
@@ -200,7 +296,22 @@ export async function getGymSoftwareSubscription(gymId: string): Promise<Softwar
     .eq('gym_id', gymId)
     .single();
 
-  return (sub as SoftwareSubscription) || null;
+  if (!sub) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const nextYearStr = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    return {
+      id: 'sub-' + gymId,
+      gym_id: gymId,
+      plan_name: 'Free Pilot',
+      status: 'pilot',
+      start_date: todayStr,
+      end_date: nextYearStr,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  return (sub as SoftwareSubscription);
 }
 
 /**
