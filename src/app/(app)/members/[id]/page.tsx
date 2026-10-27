@@ -12,6 +12,7 @@ import { MemberPaymentHistoryClient } from '@/components/payments/MemberPaymentH
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatDate, getDaysRemaining, isExpired } from '@/lib/utils/dates';
 import { resolveCurrentMembership, calculateMembershipDues } from '@/lib/utils/memberships';
+import { normalizeIndianPhoneNumber } from '@/lib/utils/pdf';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -68,9 +69,8 @@ export default async function MemberDetailPage({
   const daysRemaining = currentMembership ? getDaysRemaining(currentMembership.end_date) : null;
   const isCurrentExpired = currentMembership ? isExpired(currentMembership.end_date) : false;
 
-  // Formulate WhatsApp follow-up link for India (prefix with 91 if 10-digit number)
-  const rawDigits = member.mobile.replace(/\D/g, '');
-  const cleanPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
+  // Formulate WhatsApp follow-up link for India (prefix with 91, strip leading 0)
+  const cleanPhone = normalizeIndianPhoneNumber(member.mobile);
 
   let followUpText = `Hi ${member.full_name}, greetings from ${gymData.gym?.name || 'the gym'}!`;
   if (outstandingBalance > 0) {

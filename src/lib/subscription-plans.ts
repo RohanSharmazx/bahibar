@@ -20,13 +20,11 @@ export interface SaasPlan {
 export const SAAS_CONFIG = {
   currency: 'INR',
   currencySymbol: '₹',
-  isFreeOpenSourceMode: true, // Community Edition / Free Hosted Pilot
-  enforcePaywall: false, // Disabled: No 30-day lockouts; self-hostable without payment keys
   defaultTrialDays: 30,
   trialReminderThresholdDays: 7,
-  gracePeriodDays: 3,
+  gracePeriodDays: 3, // Grace period after expiry before hard read-only lockdown
   supportEmail: 'support@bahibar.com',
-  companyName: 'BahiBar Open Source',
+  companyName: 'BahiBar Technologies',
 } as const;
 
 export const SAAS_PLANS: Record<'monthly' | 'annual', SaasPlan> = {

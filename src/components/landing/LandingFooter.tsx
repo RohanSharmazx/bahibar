@@ -28,16 +28,8 @@ export function LandingFooter() {
             <Link href="/login" className="hover:text-[#12BBDD] transition-colors py-2 min-h-[44px] inline-flex items-center">
               Sign In
             </Link>
-            <a
-              href="https://github.com/RohanSharmazx/bahibar"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[#12BBDD] transition-colors py-2 min-h-[44px] inline-flex items-center"
-            >
-              GitHub Source
-            </a>
             <Link href="/register" className="text-[#12BBDD] hover:underline font-bold py-2 min-h-[44px] inline-flex items-center">
-              Start Free Pilot →
+              Start Free Trial →
             </Link>
           </div>
         </div>

@@ -341,10 +341,11 @@ describe('Membership Renewal & Status Calculations', () => {
 
   describe('Consecutive Renewal & Period Math', () => {
     it('active membership renewal continues uninterrupted from the day after current expiry', () => {
-      const futureExpiry = '2026-10-24';
+      const futureDate = addDays(startOfDay(new Date()), 10);
+      const futureExpiry = formatDateToISO(futureDate);
+      const expectedStart = formatDateToISO(addDays(futureDate, 1));
       const renewalStart = calculateRenewalStartDate(futureExpiry);
-      // In local time, day after 2026-10-24 is 2026-10-25
-      expect(formatDateToISO(renewalStart)).toBe('2026-10-25');
+      expect(formatDateToISO(renewalStart)).toBe(expectedStart);
     });
 
     it('expired membership renewal restarts from today', () => {

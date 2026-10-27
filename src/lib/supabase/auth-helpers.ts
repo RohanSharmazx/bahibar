@@ -180,5 +180,9 @@ export async function getGymSoftwareSubscription(gymId: string): Promise<Softwar
  */
 export async function requireActiveSubscription(gymId: string): Promise<void> {
   const sub = await getGymSoftwareSubscription(gymId);
+  // Free pilot strategy: gyms in the free pilot or with pilot status are never locked out
+  if (!sub || sub.status === 'pilot' || sub.plan_name === 'pilot' || sub.plan_name === 'Free Pilot' || process.env.NEXT_PUBLIC_FREE_PILOT !== 'false') {
+    return;
+  }
   assertActiveSubscription(sub);
 }

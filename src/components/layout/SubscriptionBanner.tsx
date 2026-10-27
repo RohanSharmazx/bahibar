@@ -10,6 +10,11 @@ interface SubscriptionBannerProps {
 }
 
 export function SubscriptionBanner({ subscription }: SubscriptionBannerProps) {
+  // Free Pilot: do not show lockout or renewal banners during the free pilot
+  if (subscription?.status === 'pilot' || subscription?.plan_name === 'Free Pilot' || process.env.NEXT_PUBLIC_FREE_PILOT !== 'false') {
+    return null;
+  }
+
   const evaluated = evaluateSubscription(subscription);
 
   if (evaluated.isReadOnly) {

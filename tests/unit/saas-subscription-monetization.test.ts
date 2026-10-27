@@ -75,7 +75,7 @@ describe('SaaS Subscription & Trial Monetization Tests', () => {
       expect(result.canMutate).toBe(true);
     });
 
-    it('authoritatively locks trial into read-only mode once end_date has elapsed when enforcePaywall is enabled', () => {
+    it('authoritatively locks trial into read-only mode once end_date has elapsed, even if status is not updated in DB', () => {
       // Simulate trial whose end_date was yesterday, but DB status field is still 'trial'
       const expiredSub: SoftwareSubscription = {
         id: 'sub-3',
@@ -88,19 +88,19 @@ describe('SaaS Subscription & Trial Monetization Tests', () => {
         updated_at: new Date().toISOString(),
       };
 
-      const result = evaluateSubscription(expiredSub, today, { enforcePaywall: true });
+      const result = evaluateSubscription(expiredSub, today);
       expect(result.effectiveStatus).toBe('expired');
       expect(result.isReadOnly).toBe(true);
       expect(result.canMutate).toBe(false);
       expect(result.daysLeft).toBe(0);
 
-      // Assert that write operations throw an informative error when paywall is enforced
-      expect(() => assertActiveSubscription(expiredSub, today, { enforcePaywall: true })).toThrow(
+      // Assert that write operations throw an informative error
+      expect(() => assertActiveSubscription(expiredSub, today)).toThrow(
         /Read-Only mode/i
       );
     });
 
-    it('grants a 3-day grace period for past-due active paid subscriptions before locking when enforcePaywall is enabled', () => {
+    it('grants a 3-day grace period for past-due active paid subscriptions before locking', () => {
       const pastDueSub: SoftwareSubscription = {
         id: 'sub-4',
         gym_id: dummyGymId,
@@ -112,7 +112,7 @@ describe('SaaS Subscription & Trial Monetization Tests', () => {
         updated_at: new Date().toISOString(),
       };
 
-      const result = evaluateSubscription(pastDueSub, today, { enforcePaywall: true });
+      const result = evaluateSubscription(pastDueSub, today);
       expect(result.effectiveStatus).toBe('past_due');
       expect(result.inGracePeriod).toBe(true);
       expect(result.canMutate).toBe(true);
@@ -123,32 +123,10 @@ describe('SaaS Subscription & Trial Monetization Tests', () => {
         ...pastDueSub,
         end_date: format(subDays(today, 5), DATE_FORMAT.input),
       };
-      const overdueResult = evaluateSubscription(overdueSub, today, { enforcePaywall: true });
+      const overdueResult = evaluateSubscription(overdueSub, today);
       expect(overdueResult.effectiveStatus).toBe('expired');
       expect(overdueResult.isReadOnly).toBe(true);
       expect(overdueResult.canMutate).toBe(false);
-    });
-
-    it('ensures Open Source / Free Community Pilot mode never blocks mutations or locks records', () => {
-      const expiredSub: SoftwareSubscription = {
-        id: 'sub-os-1',
-        gym_id: dummyGymId,
-        plan_name: 'trial',
-        status: 'trial',
-        start_date: format(subDays(today, 60), DATE_FORMAT.input),
-        end_date: format(subDays(today, 30), DATE_FORMAT.input), // 30 days expired
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      // Default evaluation (with SAAS_CONFIG.enforcePaywall = false)
-      const result = evaluateSubscription(expiredSub, today);
-      expect(result.effectiveStatus).toBe('expired');
-      expect(result.isReadOnly).toBe(false);
-      expect(result.canMutate).toBe(true);
-
-      // assertActiveSubscription must NOT throw
-      expect(() => assertActiveSubscription(expiredSub, today)).not.toThrow();
     });
   });
 

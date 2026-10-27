@@ -95,7 +95,8 @@ export type SubscriptionStatus =
   | 'past_due'
   | 'read_only'
   | 'expired'
-  | 'cancelled';
+  | 'cancelled'
+  | 'pilot';
 
 export interface SoftwareSubscription {
   id: string;

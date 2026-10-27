@@ -11,7 +11,6 @@ import {
   verifyAndFulfillSubscriptionAction,
   type SubscriptionBillingDetails,
 } from '@/actions/subscription';
-import { SAAS_CONFIG } from '@/lib/subscription-plans';
 import {
   CreditCard,
   ShieldCheck,
@@ -50,6 +49,75 @@ export function SubscriptionBillingCard({
     amountPaise: number;
     planId: 'monthly' | 'annual';
   } | null>(null);
+
+  const isFreePilot =
+    evaluated.rawSubscription?.status === 'pilot' ||
+    evaluated.rawSubscription?.plan_name === 'Free Pilot' ||
+    process.env.NEXT_PUBLIC_FREE_PILOT !== 'false';
+
+  if (isFreePilot) {
+    return (
+      <Card className="shadow-xs border-emerald-200">
+        <CardHeader className="border-b border-emerald-100 bg-emerald-50/40">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                <CardTitle>BahiBar Free Pilot Partner License</CardTitle>
+              </div>
+              <CardDescription className="mt-1">
+                Complimentary full software access for <strong className="text-slate-800">{gym.name}</strong>
+              </CardDescription>
+            </div>
+            <div>
+              <Badge variant="success" className="gap-1.5 font-semibold bg-emerald-100 text-emerald-800 border-emerald-300">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Active Free Pilot
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm">
+            <div>
+              <span className="text-xs text-slate-500 uppercase font-medium">Program Plan</span>
+              <p className="font-bold text-slate-900 mt-0.5">Free Pilot Partner</p>
+            </div>
+            <div>
+              <span className="text-xs text-slate-500 uppercase font-medium">Software Cost</span>
+              <p className="font-semibold text-emerald-700 mt-0.5">₹0 / Free for Pilot</p>
+            </div>
+            <div>
+              <span className="text-xs text-slate-500 uppercase font-medium">Access Status</span>
+              <p className="font-semibold text-emerald-700 mt-0.5">Full Unrestricted Access</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 text-sm text-emerald-900 space-y-2">
+            <h4 className="font-bold text-emerald-950">Pilot Partner Benefits Included:</h4>
+            <ul className="text-xs sm:text-sm text-emerald-800 space-y-1.5">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>Unlimited gym members, memberships, and plan creation</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>Automated dues calculation and expiry tracking</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>Instant WhatsApp receipts & payment slips</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>Full CSV & JSON data export with zero platform lock-in</span>
+              </li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const isExpired = evaluated.effectiveStatus === 'expired';
   const isTrial = evaluated.effectiveStatus === 'trial';
@@ -184,44 +252,35 @@ export function SubscriptionBillingCard({
           </div>
 
           <div className="flex items-center gap-2">
-            {SAAS_CONFIG.isFreeOpenSourceMode ? (
-              <Badge variant="success" className="gap-1.5 font-semibold">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Community Pilot Edition (100% Free)
+            {isTestMode && (
+              <Badge variant="warning" className="border-amber-300 bg-amber-50 text-amber-800 text-xs">
+                Test / Sandbox Mode
               </Badge>
-            ) : (
-              <>
-                {isTestMode && (
-                  <Badge variant="warning" className="border-amber-300 bg-amber-50 text-amber-800 text-xs">
-                    Test / Sandbox Mode
-                  </Badge>
-                )}
+            )}
 
-                {isTrial && (
-                  <Badge variant="warning" className="gap-1.5 font-semibold">
-                    <Clock className="h-3.5 w-3.5" />
-                    Free Trial ({evaluated.daysLeft}d left)
-                  </Badge>
-                )}
-                {isActive && (
-                  <Badge variant="success" className="gap-1.5 font-semibold">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    Active Subscription
-                  </Badge>
-                )}
-                {isPastDue && (
-                  <Badge variant="warning" className="gap-1.5 font-semibold bg-orange-100 text-orange-800 border-orange-300">
-                    <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />
-                    Grace Period ({evaluated.graceDaysLeft}d left)
-                  </Badge>
-                )}
-                {isExpired && (
-                  <Badge variant="danger" className="gap-1.5 font-semibold">
-                    <Lock className="h-3.5 w-3.5" />
-                    Read-Only Mode
-                  </Badge>
-                )}
-              </>
+            {isTrial && (
+              <Badge variant="warning" className="gap-1.5 font-semibold">
+                <Clock className="h-3.5 w-3.5" />
+                Free Trial ({evaluated.daysLeft}d left)
+              </Badge>
+            )}
+            {isActive && (
+              <Badge variant="success" className="gap-1.5 font-semibold">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Active Subscription
+              </Badge>
+            )}
+            {isPastDue && (
+              <Badge variant="warning" className="gap-1.5 font-semibold bg-orange-100 text-orange-800 border-orange-300">
+                <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />
+                Grace Period ({evaluated.graceDaysLeft}d left)
+              </Badge>
+            )}
+            {isExpired && (
+              <Badge variant="danger" className="gap-1.5 font-semibold">
+                <Lock className="h-3.5 w-3.5" />
+                Read-Only Mode
+              </Badge>
             )}
           </div>
         </div>
@@ -229,65 +288,31 @@ export function SubscriptionBillingCard({
 
       <CardContent className="space-y-6">
         {/* Status Alert Banners */}
-        {SAAS_CONFIG.isFreeOpenSourceMode ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-950 space-y-2">
-            <div className="flex items-center gap-2 font-bold text-emerald-900">
-              <Sparkles className="h-5 w-5 text-emerald-600 shrink-0" />
-              <span>BahiBar Community Edition — Free Hosted Pilot Active</span>
+        {isExpired && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-900 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-rose-950">
+              <Lock className="h-5 w-5 text-rose-600 shrink-0" />
+              <span>30-Day Trial Ended — Read-Only Mode Active</span>
             </div>
-            <p className="text-xs sm:text-sm text-emerald-800 leading-relaxed">
-              This instance is running the free community pilot. All gym management capabilities
-              (member tracking, plan customization, WhatsApp payment receipts, dues alerts, and full CSV/JSON
-              backups) are completely unlocked with no paywall or trial expiration.
+            <p className="text-xs sm:text-sm text-rose-800 leading-relaxed">
+              Your existing gym members, payment logs, and plans remain 100% safe and exportable.
+              To enroll new members, record dues collections, or make plan adjustments, renew your
+              workspace subscription below.
             </p>
-            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold">
-              <a
-                href="https://github.com/RohanSharmazx/bahibar"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-900 hover:underline"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                View Source on GitHub
-              </a>
-              <span className="text-emerald-300">•</span>
-              <a
-                href="/export"
-                className="inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-900 hover:underline"
-              >
-                Export Full Gym Backup
-              </a>
-            </div>
           </div>
-        ) : (
-          <>
-            {isExpired && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-900 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-rose-950">
-                  <Lock className="h-5 w-5 text-rose-600 shrink-0" />
-                  <span>30-Day Trial Ended — Read-Only Mode Active</span>
-                </div>
-                <p className="text-xs sm:text-sm text-rose-800 leading-relaxed">
-                  Your existing gym members, payment logs, and plans remain 100% safe and exportable.
-                  To enroll new members, record dues collections, or make plan adjustments, renew your
-                  workspace subscription below.
-                </p>
-              </div>
-            )}
+        )}
 
-            {isPastDue && (
-              <div className="rounded-xl border border-orange-200 bg-orange-50/90 p-4 text-sm text-orange-950 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-orange-900">
-                  <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0" />
-                  <span>Renewal Grace Period Active ({evaluated.graceDaysLeft} days remaining)</span>
-                </div>
-                <p className="text-xs text-orange-800">
-                  Your active subscription period has elapsed. Please renew to prevent your gym workspace
-                  from transitioning into read-only mode.
-                </p>
-              </div>
-            )}
-          </>
+        {isPastDue && (
+          <div className="rounded-xl border border-orange-200 bg-orange-50/90 p-4 text-sm text-orange-950 space-y-1">
+            <div className="flex items-center gap-2 font-bold text-orange-900">
+              <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0" />
+              <span>Renewal Grace Period Active ({evaluated.graceDaysLeft} days remaining)</span>
+            </div>
+            <p className="text-xs text-orange-800">
+              Your active subscription period has elapsed. Please renew to prevent your gym workspace
+              from transitioning into read-only mode.
+            </p>
+          </div>
         )}
 
         {/* Subscription Metadata Summary */}
@@ -328,142 +353,103 @@ export function SubscriptionBillingCard({
           </div>
         )}
 
-        {/* Plan Selection Grid & Checkout */}
-        {SAAS_CONFIG.isFreeOpenSourceMode ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 space-y-4">
-            <h4 className="text-sm font-bold text-slate-900">Community Edition Entitlements</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
-              <div className="flex items-center gap-2 bg-white p-3 rounded-lg border border-slate-100">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span><strong>Unlimited Members:</strong> No cap on registered active or archived athletes.</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white p-3 rounded-lg border border-slate-100">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span><strong>Full Dues & Payment Tracking:</strong> Record cash, UPI, and bank collections.</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white p-3 rounded-lg border border-slate-100">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span><strong>Instant WhatsApp & PDF Slips:</strong> Share digital receipts with 1 click.</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white p-3 rounded-lg border border-slate-100">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span><strong>Automated Local Backups:</strong> JSON and CSV exports remain 100% in your hands.</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200/80 text-xs text-slate-600">
-              <span>Looking to report a bug or request a feature?</span>
-              <a
-                href="https://github.com/RohanSharmazx/bahibar/issues"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold transition-colors"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Open Issue on GitHub
-              </a>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 mb-3">
-                Choose Billing Interval for {gym.name}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {availablePlans.map((plan) => {
-                  const isSelected = selectedPlanId === plan.id;
-                  return (
-                    <div
-                      key={plan.id}
-                      onClick={() => setSelectedPlanId(plan.id)}
-                      className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                        isSelected
-                          ? 'border-sky-600 bg-sky-50/40 shadow-xs'
-                          : 'border-slate-200 hover:border-slate-300 bg-white'
-                      }`}
-                    >
-                      {plan.savingsPercent && (
-                        <span className="absolute -top-3 right-4 px-2 py-0.5 bg-emerald-600 text-white text-[11px] font-bold rounded-full shadow-2xs">
-                          Save {plan.savingsPercent}% (2 Months Free)
-                        </span>
-                      )}
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-slate-900 text-base">{plan.name}</span>
-                          <div
-                            className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                              isSelected ? 'border-sky-600 bg-sky-600' : 'border-slate-300'
-                            }`}
-                          >
-                            {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                          </div>
-                        </div>
-                        <div className="flex items-baseline gap-1 mt-2">
-                          <span className="text-2xl font-black text-slate-900">
-                            ₹{plan.priceRupees.toLocaleString('en-IN')}
-                          </span>
-                          <span className="text-xs text-slate-500">
-                            /{plan.billingInterval === 'year' ? 'year' : 'month'}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-600 mt-2">{plan.description}</p>
+        {/* Plan Selection Grid */}
+        <div>
+          <h3 className="text-sm font-bold text-slate-900 mb-3">
+            Choose Billing Interval for {gym.name}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {availablePlans.map((plan) => {
+              const isSelected = selectedPlanId === plan.id;
+              return (
+                <div
+                  key={plan.id}
+                  onClick={() => setSelectedPlanId(plan.id)}
+                  className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                    isSelected
+                      ? 'border-sky-600 bg-sky-50/40 shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  {plan.savingsPercent && (
+                    <span className="absolute -top-3 right-4 px-2 py-0.5 bg-emerald-600 text-white text-[11px] font-bold rounded-full shadow-2xs">
+                      Save {plan.savingsPercent}% (2 Months Free)
+                    </span>
+                  )}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-slate-900 text-base">{plan.name}</span>
+                      <div
+                        className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                          isSelected ? 'border-sky-600 bg-sky-600' : 'border-slate-300'
+                        }`}
+                      >
+                        {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                       </div>
-
-                      <ul className="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs text-slate-700">
-                        {plan.features.slice(0, 3).map((f, i) => (
-                          <li key={i} className="flex items-center gap-1.5">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                            <span>{f}</span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                    <div className="flex items-baseline gap-1 mt-2">
+                      <span className="text-2xl font-black text-slate-900">
+                        ₹{plan.priceRupees.toLocaleString('en-IN')}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        /{plan.billingInterval === 'year' ? 'year' : 'month'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-2">{plan.description}</p>
+                  </div>
 
-            {/* Pricing & Tax Transparency Notice */}
-            <div className="rounded-lg bg-slate-50 p-3 border border-slate-200/80 text-xs text-slate-600 space-y-1">
-              <p className="font-medium text-slate-700">Billing Transparency & Entitlement Terms:</p>
-              <ul className="list-disc pl-4 space-y-0.5">
-                <li>Provisional launch pricing: ₹249/mo or ₹2,499/yr inclusive of applicable taxes.</li>
-                <li>Subscriptions are tied directly to this gym workspace (<code className="text-slate-800">{gym.name}</code>).</li>
-                <li>No automatic recurring debits are charged without explicit confirmation; renewal is manual.</li>
-                <li>Data remains exportable in CSV and JSON formats even if access expires.</li>
-              </ul>
-            </div>
+                  <ul className="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs text-slate-700">
+                    {plan.features.slice(0, 3).map((f, i) => (
+                      <li key={i} className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-            {/* Action Button */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-              <div className="text-xs text-slate-500 text-center sm:text-left">
-                <span>Payment Gateway: </span>
-                <strong className="text-slate-700">Razorpay (Cards, UPI, NetBanking)</strong>
-              </div>
-              <Button
-                type="button"
-                onClick={handleInitiateCheckout}
-                disabled={loading}
-                className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white font-semibold px-6 cursor-pointer"
-              >
-                {loading ? (
-                  <span>Preparing checkout...</span>
-                ) : isExpired ? (
-                  <span className="flex items-center gap-2">
-                    Renew {selectedPlan.name} (₹{selectedPlan.priceRupees})
-                    <ArrowRight className="h-4 w-4" />
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    Extend / Upgrade to {selectedPlan.name} (₹{selectedPlan.priceRupees})
-                    <Sparkles className="h-4 w-4" />
-                  </span>
-                )}
-              </Button>
-            </div>
-          </>
-        )}
+        {/* Pricing & Tax Transparency Notice */}
+        <div className="rounded-lg bg-slate-50 p-3 border border-slate-200/80 text-xs text-slate-600 space-y-1">
+          <p className="font-medium text-slate-700">Billing Transparency & Entitlement Terms:</p>
+          <ul className="list-disc pl-4 space-y-0.5">
+            <li>Provisional launch pricing: ₹249/mo or ₹2,499/yr inclusive of applicable taxes.</li>
+            <li>Subscriptions are tied directly to this gym workspace (<code className="text-slate-800">{gym.name}</code>).</li>
+            <li>No automatic recurring debits are charged without explicit confirmation; renewal is manual.</li>
+            <li>Data remains exportable in CSV and JSON formats even if access expires.</li>
+          </ul>
+        </div>
+
+        {/* Action Button */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          <div className="text-xs text-slate-500 text-center sm:text-left">
+            <span>Payment Gateway: </span>
+            <strong className="text-slate-700">Razorpay (Cards, UPI, NetBanking)</strong>
+          </div>
+          <Button
+            type="button"
+            onClick={handleInitiateCheckout}
+            disabled={loading}
+            className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white font-semibold px-6 cursor-pointer"
+          >
+            {loading ? (
+              <span>Preparing checkout...</span>
+            ) : isExpired ? (
+              <span className="flex items-center gap-2">
+                Renew {selectedPlan.name} (₹{selectedPlan.priceRupees})
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                Extend / Upgrade to {selectedPlan.name} (₹{selectedPlan.priceRupees})
+                <Sparkles className="h-4 w-4" />
+              </span>
+            )}
+          </Button>
+        </div>
 
         {/* Test Simulator Modal */}
         {testModalOrder && (

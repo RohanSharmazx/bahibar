@@ -65,25 +65,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-slate-900">4. Transparent, Privacy-Conscious Usage Analytics</h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              For our official hosted pilot instance, we collect aggregate, privacy-conscious usage metrics (such as
-              anonymous page visits, gym workspace creation, and feature usage) to understand whether the application
-              is useful and what parts need improvement.
-            </p>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              <strong>Zero-PII Guarantee:</strong> We never collect or transmit member names, phone numbers,
-              financial amounts (INR), receipts, passwords, or individual customer details to analytics providers.
-            </p>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              <strong>Self-Hosted Instances:</strong> Telemetry is strictly disabled by default
-              (<code className="text-xs bg-slate-100 px-1 py-0.5 rounded font-mono">NEXT_PUBLIC_ENABLE_ANALYTICS=false</code>).
-              Independent installations send zero telemetry back to us.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-slate-900">5. Contact</h2>
+            <h2 className="text-lg font-bold text-slate-900">4. Contact</h2>
             <p className="text-sm text-slate-600 leading-relaxed">
               For privacy inquiries or technical questions regarding record deletion, contact us at{' '}
               <a href="mailto:support@bahibar.com" className="text-[#087FDB] font-semibold hover:underline">

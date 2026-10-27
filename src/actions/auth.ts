@@ -32,7 +32,7 @@ async function getBaseUrl(): Promise<string> {
   try {
     const headerList = await headers();
     const host = headerList.get('x-forwarded-host') || headerList.get('host') || 'localhost:3000';
-    const proto = headerList.get('x-forwarded-proto') || (host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https');
+    const proto = headerList.get('x-forwarded-proto') || (host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'http');
     return `${proto}://${host}`;
   } catch {
     return 'http://localhost:3000';
