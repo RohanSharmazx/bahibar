@@ -27,6 +27,20 @@ export default function RegisterPage() {
         </Alert>
       )}
 
+      {state?.message && (
+        <Alert variant="success" title={t('common.success')}>
+          <p>{state.message}</p>
+          <div className="mt-3">
+            <Link
+              href="/login"
+              className="inline-flex items-center text-xs font-semibold text-emerald-800 hover:text-emerald-950 underline"
+            >
+              Go to Sign In →
+            </Link>
+          </div>
+        </Alert>
+      )}
+
       <form action={formAction} className="space-y-4">
         <Input
           label={t('auth.fullNameLabel')}
