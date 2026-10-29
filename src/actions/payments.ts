@@ -263,6 +263,7 @@ export async function getPaymentsHistoryAction(memberId?: string): Promise<Payme
         ? await supabase
             .from('payments')
             .select('membership_id, amount')
+            .eq('gym_id', gymId)
             .in('membership_id', membershipIds)
         : { data: [] };
 

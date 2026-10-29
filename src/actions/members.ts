@@ -494,10 +494,12 @@ export async function getMembersWithDetailsAction(options?: {
       supabase
         .from('member_memberships')
         .select('*')
+        .eq('gym_id', gymId)
         .in('member_id', memberIds),
       supabase
         .from('payments')
         .select('*')
+        .eq('gym_id', gymId)
         .in('member_id', memberIds),
     ]);
 

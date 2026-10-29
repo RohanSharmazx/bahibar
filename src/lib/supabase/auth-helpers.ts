@@ -122,15 +122,19 @@ export async function getUserGymStaff(preferredGymId?: string): Promise<GymStaff
     }
 
     let staffEntries = db.gym_staff.filter((s) => s.user_id === user.id);
-    if (staffEntries.length === 0 && activeGymId) {
-      const gym = db.gyms.find((g) => g.id === activeGymId);
-      if (gym) {
+
+    // If no staff entry exists in local DB, check if the user has authenticated workspaces in cookieGyms
+    if (staffEntries.length === 0 && cookieGyms.length > 0) {
+      const targetGym = activeGymId
+        ? cookieGyms.find((g) => g.id === activeGymId) || cookieGyms[0]
+        : cookieGyms[0];
+      if (targetGym) {
         const entry: GymStaff = {
           id: crypto.randomUUID(),
-          gym_id: activeGymId,
+          gym_id: targetGym.id,
           user_id: user.id,
           role: 'owner',
-          created_at: new Date().toISOString(),
+          created_at: targetGym.created_at || new Date().toISOString(),
         };
         db.gym_staff.push(entry);
         try {
@@ -138,18 +142,6 @@ export async function getUserGymStaff(preferredGymId?: string): Promise<GymStaff
         } catch {}
         staffEntries = [entry];
       }
-    }
-
-    // Fallback: If still no staff entry in db but cookieGyms exists, construct virtual owner staff entry
-    if (staffEntries.length === 0 && cookieGyms.length > 0) {
-      const targetGym = activeGymId ? (cookieGyms.find((g) => g.id === activeGymId) || cookieGyms[0]) : cookieGyms[0];
-      return {
-        id: crypto.randomUUID(),
-        gym_id: targetGym.id,
-        user_id: user.id,
-        role: 'owner',
-        created_at: targetGym.created_at || new Date().toISOString(),
-      };
     }
 
     if (staffEntries.length === 0) return null;

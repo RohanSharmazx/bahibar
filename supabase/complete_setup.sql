@@ -105,6 +105,15 @@ CREATE POLICY "Users can update own gyms"
   ON gyms FOR UPDATE
   USING (id IN (SELECT user_gym_ids()));
 
+CREATE POLICY "Owners can delete own gyms"
+  ON gyms FOR DELETE
+  USING (
+    id IN (
+      SELECT gym_id FROM gym_staff
+      WHERE user_id = auth.uid() AND role = 'owner'
+    )
+  );
+
 -- Anyone authenticated can create a gym (onboarding)
 CREATE POLICY "Authenticated users can create gyms"
   ON gyms FOR INSERT
@@ -294,7 +303,7 @@ CREATE TABLE software_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   gym_id UUID NOT NULL UNIQUE REFERENCES gyms(id) ON DELETE CASCADE,
   plan_name TEXT NOT NULL DEFAULT 'trial',
-  status TEXT NOT NULL DEFAULT 'trial' CHECK (status IN ('trial', 'active', 'expired', 'cancelled')),
+  status TEXT NOT NULL DEFAULT 'trial' CHECK (status IN ('trial', 'active', 'expired', 'cancelled', 'pilot')),
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -316,13 +325,18 @@ CREATE TABLE subscription_history (
 ALTER TABLE software_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscription_history ENABLE ROW LEVEL SECURITY;
 
--- Users can view and insert their gym's initial trial subscription
+-- Users can view, insert, and update their gym's subscription
 CREATE POLICY "Users can view own subscription"
   ON software_subscriptions FOR SELECT
   USING (gym_id IN (SELECT user_gym_ids()));
 
 CREATE POLICY "Users can insert own subscription"
   ON software_subscriptions FOR INSERT
+  WITH CHECK (gym_id IN (SELECT user_gym_ids()));
+
+CREATE POLICY "Users can update own subscription"
+  ON software_subscriptions FOR UPDATE
+  USING (gym_id IN (SELECT user_gym_ids()))
   WITH CHECK (gym_id IN (SELECT user_gym_ids()));
 
 CREATE POLICY "Users can view own subscription history"
@@ -373,7 +387,7 @@ CREATE TABLE IF NOT EXISTS saas_subscription_payments (
 ALTER TABLE saas_subscription_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saas_subscription_payments ENABLE ROW LEVEL SECURITY;
 
--- Users can only view their gym's SaaS orders and payments
+-- Users can only view and mutate their gym's SaaS orders and payments
 CREATE POLICY "Users can view own gym saas orders"
   ON saas_subscription_orders FOR SELECT
   USING (gym_id IN (SELECT user_gym_ids()));
@@ -382,12 +396,56 @@ CREATE POLICY "Users can insert own gym saas orders"
   ON saas_subscription_orders FOR INSERT
   WITH CHECK (gym_id IN (SELECT user_gym_ids()));
 
+CREATE POLICY "Users can update own gym saas orders"
+  ON saas_subscription_orders FOR UPDATE
+  USING (gym_id IN (SELECT user_gym_ids()))
+  WITH CHECK (gym_id IN (SELECT user_gym_ids()));
+
 CREATE POLICY "Users can view own gym saas payments"
   ON saas_subscription_payments FOR SELECT
   USING (gym_id IN (SELECT user_gym_ids()));
+
+CREATE POLICY "Users can insert own gym saas payments"
+  ON saas_subscription_payments FOR INSERT
+  WITH CHECK (gym_id IN (SELECT user_gym_ids()));
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_saas_orders_gym ON saas_subscription_orders(gym_id);
 CREATE INDEX IF NOT EXISTS idx_saas_orders_gateway ON saas_subscription_orders(gateway_order_id);
 CREATE INDEX IF NOT EXISTS idx_saas_payments_gym ON saas_subscription_payments(gym_id);
 CREATE INDEX IF NOT EXISTS idx_saas_payments_gateway ON saas_subscription_payments(gateway_payment_id);
+
+-- Performance Compound Tenant Indexes
+CREATE INDEX IF NOT EXISTS idx_member_memberships_gym_member ON member_memberships(gym_id, member_id);
+CREATE INDEX IF NOT EXISTS idx_payments_gym_member ON payments(gym_id, member_id);
+
+-- Create pilot_registrations table for landing page interest capture
+CREATE TABLE IF NOT EXISTS pilot_registrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  gym_name TEXT NOT NULL,
+  city TEXT NOT NULL,
+  member_count TEXT NOT NULL,
+  contact_name TEXT NOT NULL,
+  contact_phone TEXT NOT NULL,
+  contact_email TEXT,
+  primary_challenge TEXT,
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'contacted', 'approved', 'rejected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Enable RLS
+ALTER TABLE pilot_registrations ENABLE ROW LEVEL SECURITY;
+
+-- Allow public / unauthenticated gym owners to submit pilot registration inquiries
+CREATE POLICY "Public can submit pilot registrations"
+  ON pilot_registrations FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+-- Updated_at trigger for pilot registrations
+CREATE TRIGGER pilot_registrations_updated_at
+  BEFORE UPDATE ON pilot_registrations
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();

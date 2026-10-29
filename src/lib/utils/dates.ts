@@ -56,7 +56,7 @@ export function calculateEndDate(
  */
 export function calculateRenewalStartDate(currentEndDate: Date | string): Date {
   const end = parseDateOnly(currentEndDate);
-  const today = startOfDay(new Date());
+  const today = parseDateOnly(getTodayISO());
 
   if (isAfter(end, today) || isEqual(end, today)) {
     // Membership still active — continue uninterrupted from day after expiry
@@ -97,7 +97,7 @@ export function formatDateForInput(date: Date | string): string {
  */
 export function getDaysRemaining(endDate: Date | string): number {
   const end = parseDateOnly(endDate);
-  const today = startOfDay(new Date());
+  const today = parseDateOnly(getTodayISO());
   return differenceInDays(end, today);
 }
 
