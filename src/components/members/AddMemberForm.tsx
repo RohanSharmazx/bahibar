@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { ArrowLeft, Calendar, IndianRupee, Sparkles } from 'lucide-react';
+import { trackFirstMemberAdded } from '@/lib/analytics';
 import type { MembershipPlan } from '@/types';
 
 interface AddMemberFormProps {
@@ -72,6 +73,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
     formData.set('payment_method', paymentMethod);
 
     startTransition(async () => {
+      trackFirstMemberAdded();
       const res = await createMemberAction(null, formData);
       if (res?.error) {
         setError(res.error);

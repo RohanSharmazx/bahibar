@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, Sparkles, CheckCircle2, Clock, Calendar, Users, IndianRupee, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useI18n } from '@/lib/i18n/context';
+import { trackSignupCtaClicked } from '@/lib/analytics';
 
 export function HeroSection() {
   const { t } = useI18n();
@@ -37,6 +38,7 @@ export function HeroSection() {
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
               <Link
                 href="/register"
+                onClick={() => trackSignupCtaClicked('hero')}
                 className="w-full sm:w-auto inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#087FDB] px-6 text-sm font-bold text-white shadow-md hover:bg-[#0669b6] active:bg-[#055393] transition-all cursor-pointer min-h-[48px] tap-feedback"
               >
                 <span>{t('landing.startTrial')}</span>

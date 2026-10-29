@@ -9,6 +9,7 @@ import {
   isMembershipExpired,
 } from '@/lib/utils/memberships';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SpotlightCard } from '@/components/ui/SpotlightCard';
 import { Badge } from '@/components/ui/badge';
 import {
   Users,
@@ -74,7 +75,7 @@ export default async function DashboardPage() {
 
       {/* Primary KPI Grid (adaptive 1 col on < 375px, 2 col on tablet, 4 col on desktop) */}
       <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="border-l-4 border-l-sky-500">
+        <SpotlightCard className="border-l-4 border-l-sky-500" spotlightColor="rgba(14, 165, 233, 0.15)">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-semibold uppercase tracking-wider">Total Members</span>
@@ -85,9 +86,9 @@ export default async function DashboardPage() {
             <div className="text-2xl sm:text-3xl font-bold text-slate-900">{totalMembers}</div>
             <p className="text-xs text-slate-500 mt-1">{activeMembers} active memberships</p>
           </CardContent>
-        </Card>
+        </SpotlightCard>
 
-        <Card className="border-l-4 border-l-amber-500">
+        <SpotlightCard className="border-l-4 border-l-amber-500" spotlightColor="rgba(245, 158, 11, 0.15)">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-semibold uppercase tracking-wider">Expiring (7 Days)</span>
@@ -98,9 +99,9 @@ export default async function DashboardPage() {
             <div className="text-2xl sm:text-3xl font-bold text-slate-900">{expiringSoonMembers.length}</div>
             <p className="text-xs text-slate-500 mt-1">Need follow-up / renewal</p>
           </CardContent>
-        </Card>
+        </SpotlightCard>
 
-        <Card className="border-l-4 border-l-emerald-500">
+        <SpotlightCard className="border-l-4 border-l-emerald-500" spotlightColor="rgba(16, 185, 129, 0.15)">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-semibold uppercase tracking-wider">Today&apos;s Fees</span>
@@ -117,9 +118,9 @@ export default async function DashboardPage() {
                 : `Month: ${formatCurrencyCompact(collections.thisMonth)} (${collections.monthLabel})`}
             </p>
           </CardContent>
-        </Card>
+        </SpotlightCard>
 
-        <Card className="border-l-4 border-l-rose-500">
+        <SpotlightCard className="border-l-4 border-l-rose-500" spotlightColor="rgba(244, 63, 94, 0.15)">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-semibold uppercase tracking-wider">Outstanding Dues</span>
@@ -132,7 +133,7 @@ export default async function DashboardPage() {
             </div>
             <p className="text-xs text-slate-500 mt-1">{membersWithDues.length} members with balance</p>
           </CardContent>
-        </Card>
+        </SpotlightCard>
       </div>
 
       {/* Action / Attention Section */}

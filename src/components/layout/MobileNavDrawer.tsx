@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { BahiBarIcon } from '@/components/ui/logo';
 import { logoutAction } from '@/actions/auth';
+import { resetAnalytics } from '@/lib/analytics';
 import { useI18n, LanguageToggle } from '@/lib/i18n/context';
 import type { Gym, SoftwareSubscription } from '@/types';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -251,7 +252,12 @@ export function MobileNavDrawer({
               <p className="text-sm font-semibold text-slate-800">{userName || 'Gym Owner'}</p>
               <p className="text-xs text-slate-400">{t('common.owner')}</p>
             </div>
-            <form action={logoutAction}>
+            <form
+              action={logoutAction}
+              onSubmit={() => {
+                resetAnalytics();
+              }}
+            >
               <button
                 type="submit"
                 className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"

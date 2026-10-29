@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { createGymAction } from '@/actions/gym';
+import { trackGymCreated } from '@/lib/analytics';
 import { logoutAction } from '@/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,7 +81,13 @@ export function OnboardingForm({ isNewWorkspace }: OnboardingFormProps) {
             </div>
           )}
 
-          <form action={formAction} className="space-y-4">
+          <form
+            action={formAction}
+            onSubmit={() => {
+              trackGymCreated();
+            }}
+            className="space-y-4"
+          >
             <Input
               label="Gym Name"
               id="name"

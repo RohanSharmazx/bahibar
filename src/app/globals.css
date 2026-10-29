@@ -38,6 +38,17 @@ html[lang="hi"] body {
   letter-spacing: 0.01em;
 }
 
+/* Mobile Safe Area insets and gesture bar utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Ensure touch targets meet 44px minimum for mobile usability */
 button, a, input, select, textarea {
   touch-action: manipulation;

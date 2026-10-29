@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { I18nProvider } from "@/lib/i18n/context";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { PostHogAnalytics } from "@/components/analytics/PostHogAnalytics";
 import type { Locale } from "@/lib/i18n/types";
 import "./globals.css";
 
@@ -88,6 +89,7 @@ export default async function RootLayout({
         <I18nProvider initialLocale={initialLocale}>
           {children}
           <ServiceWorkerRegister />
+          <PostHogAnalytics />
         </I18nProvider>
       </body>
     </html>

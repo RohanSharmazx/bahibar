@@ -23,7 +23,7 @@ export function AppShell({ gym, subscription, userName, accessibleGyms, children
         <Sidebar />
         
         {/* Main Content Area */}
-        <main className="flex-1 lg:pl-64 pb-20 lg:pb-8 pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 lg:pl-64 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-8 pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
           {children}
         </main>
       </div>

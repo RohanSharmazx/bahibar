@@ -12,6 +12,7 @@ import {
   type BackupPreviewResult,
 } from '@/actions/export';
 import { downloadCsv, downloadJson } from '@/lib/utils/csv';
+import { trackDataExported } from '@/lib/analytics';
 import { formatCurrency } from '@/lib/utils/currency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -106,22 +107,27 @@ export function ExportClient() {
         if (type === 'members') {
           const csvContent = await exportMembersCsvAction();
           downloadCsv(csvContent, `gym_members_${timestamp}.csv`);
+          trackDataExported('members_csv');
           setSuccessMessage('Members directory CSV downloaded successfully.');
         } else if (type === 'plans') {
           const csvContent = await exportPlansCsvAction();
           downloadCsv(csvContent, `gym_plans_${timestamp}.csv`);
+          trackDataExported('plans_csv');
           setSuccessMessage('Membership plans CSV downloaded successfully.');
         } else if (type === 'memberships') {
           const csvContent = await exportMembershipsCsvAction();
           downloadCsv(csvContent, `gym_membership_periods_${timestamp}.csv`);
+          trackDataExported('memberships_csv');
           setSuccessMessage('Membership periods history CSV downloaded successfully.');
         } else if (type === 'payments') {
           const csvContent = await exportPaymentsCsvAction();
           downloadCsv(csvContent, `gym_payments_${timestamp}.csv`);
+          trackDataExported('payments_csv');
           setSuccessMessage('Payment ledger CSV downloaded successfully.');
         } else if (type === 'backup') {
           const jsonContent = await exportFullBackupAction();
           downloadJson(jsonContent, `gym_full_backup_${timestamp}.json`);
+          trackDataExported('full_backup_json');
           setSuccessMessage('Complete JSON database backup downloaded successfully.');
         }
       } catch (err: any) {

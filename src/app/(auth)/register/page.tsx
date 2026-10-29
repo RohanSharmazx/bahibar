@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { registerAction } from '@/actions/auth';
+import { trackRegistrationCompleted } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
@@ -41,7 +42,13 @@ export default function RegisterPage() {
         </Alert>
       )}
 
-      <form action={formAction} className="space-y-4">
+      <form
+        action={formAction}
+        onSubmit={() => {
+          trackRegistrationCompleted();
+        }}
+        className="space-y-4"
+      >
         <Input
           label={t('auth.fullNameLabel')}
           id="full_name"

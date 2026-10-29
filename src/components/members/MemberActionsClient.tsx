@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Alert } from '@/components/ui/alert';
 import { RefreshCw, IndianRupee, Archive, RotateCcw, Sparkles } from 'lucide-react';
+import { trackMembershipRenewed, trackPaymentRecorded } from '@/lib/analytics';
 import type { MembershipPlan, MemberMembership } from '@/types';
 
 interface MemberActionsClientProps {
@@ -119,6 +120,11 @@ export function MemberActionsClient({
       if (res?.error) {
         setError(res.error);
       } else {
+        const plan = availablePlans.find((p) => p.id === renewPlanId);
+        trackMembershipRenewed({
+          duration_unit: plan?.duration_unit,
+          duration_value: plan?.duration_value,
+        });
         setIsRenewOpen(false);
         router.refresh();
       }
@@ -147,6 +153,10 @@ export function MemberActionsClient({
       if (res?.error) {
         setError(res.error);
       } else {
+        trackPaymentRecorded({
+          payment_method: payMethod,
+          is_first_payment: false,
+        });
         setIsPaymentOpen(false);
         router.refresh();
       }

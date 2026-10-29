@@ -4,6 +4,7 @@ import { Suspense, useActionState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { loginAction } from '@/actions/auth';
+import { trackLoginCompleted } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
@@ -43,7 +44,13 @@ function LoginForm() {
         </Alert>
       )}
 
-      <form action={formAction} className="space-y-4">
+      <form
+        action={formAction}
+        onSubmit={() => {
+          trackLoginCompleted();
+        }}
+        className="space-y-4"
+      >
         <Input
           label={t('auth.emailLabel')}
           id="email"

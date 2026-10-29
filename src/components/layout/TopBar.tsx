@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { LogOut, ShieldAlert, Menu } from 'lucide-react';
 import { BahiBarIcon } from '@/components/ui/logo';
 import { logoutAction } from '@/actions/auth';
+import { resetAnalytics } from '@/lib/analytics';
 import { LanguageToggle, useI18n } from '@/lib/i18n/context';
 import { WorkspaceSelector } from './WorkspaceSelector';
 import { MobileNavDrawer } from './MobileNavDrawer';
@@ -126,7 +127,12 @@ export function TopBar({ gym, subscription, userName, accessibleGyms = [] }: Top
                 <span className="text-xs font-semibold text-slate-700">{userName || 'Gym Owner'}</span>
                 <span className="text-[10px] text-slate-400">Owner</span>
               </div>
-              <form action={logoutAction}>
+              <form
+                action={logoutAction}
+                onSubmit={() => {
+                  resetAnalytics();
+                }}
+              >
                 <button
                   type="submit"
                   className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
