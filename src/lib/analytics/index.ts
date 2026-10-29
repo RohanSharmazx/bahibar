@@ -59,7 +59,7 @@ export function sanitizeAnalyticsProps(props?: Record<string, unknown>): Record<
 }
 
 /**
- * Initialize PostHog client script.
+ * Initialize PostHog client script using official PostHog queue pattern.
  * Only runs once on client if NEXT_PUBLIC_POSTHOG_KEY is present.
  */
 export function initAnalytics(): void {
@@ -71,65 +71,93 @@ export function initAnalytics(): void {
     return;
   }
 
-  // Check Do Not Track
-  if (navigator.doNotTrack === '1' || (window as unknown as { doNotTrack?: string }).doNotTrack === '1') {
-    return;
-  }
-
   try {
-    // PostHog stub initializer
-    if (!window.posthog) {
-      const ph: any = [];
-      const methods = [
-        'capture',
-        'identify',
-        'alias',
-        'people.set',
-        'people.set_once',
-        'set_config',
-        'register',
-        'register_once',
-        'unregister',
-        'opt_out_capturing',
-        'has_opted_out_capturing',
-        'opt_in_capturing',
-        'reset',
-        'isFeatureEnabled',
-        'onFeatureFlags',
-        'getFeatureFlag',
-        'getFeatureFlagPayload',
-        'reloadFeatureFlags',
-        'group',
-        'updateEarlyAccessFeatureEnrollment',
-        'getEarlyAccessFeatures',
-        'getActiveMatchingSurveys',
-        'getSurveys',
-        'onSessionId',
-      ];
+    const rawHost = (POSTHOG_HOST || 'https://us.i.posthog.com').replace(/\/$/, '');
+    // PostHog static assets are served from -assets.i.posthog.com
+    const assetHost = rawHost.includes('.i.posthog.com')
+      ? rawHost.replace('.i.posthog.com', '-assets.i.posthog.com')
+      : rawHost;
 
-      for (const method of methods) {
-        ph[method] = function (...args: unknown[]) {
-          ph.push([method, ...args]);
+    if (!window.posthog || !(window.posthog as any).__SV) {
+      const ph: any = (window.posthog = (window.posthog || []) as any);
+      ph._i = ph._i || [];
+
+      ph.init = function (apiKey: string, config?: Record<string, unknown>, name?: string) {
+        function g(target: any, method: string) {
+          const parts = method.split('.');
+          if (parts.length === 2) {
+            target = target[parts[0]];
+            method = parts[1];
+          }
+          target[method] = function (...args: unknown[]) {
+            target.push([method, ...args]);
+          };
+        }
+
+        let target = ph;
+        if (typeof name !== 'undefined') {
+          target = ph[name] = [];
+        } else {
+          name = 'posthog';
+        }
+
+        target.people = target.people || [];
+        target.toString = function (noStub?: boolean) {
+          let str = 'posthog';
+          if (name !== 'posthog') str += '.' + name;
+          if (!noStub) str += ' (stub)';
+          return str;
         };
-      }
 
-      ph._i = [];
-      ph.init = function (apiKey: string, config?: Record<string, unknown>) {
-        ph._apiKey = apiKey;
-        ph._config = config;
+        const methods = [
+          'init',
+          'capture',
+          'register',
+          'register_once',
+          'register_for_session',
+          'unregister',
+          'unregister_for_session',
+          'getFeatureFlag',
+          'getFeatureFlagPayload',
+          'isFeatureEnabled',
+          'reloadFeatureFlags',
+          'identify',
+          'setPersonProperties',
+          'group',
+          'resetGroups',
+          'reset',
+          'get_distinct_id',
+          'getGroups',
+          'get_session_id',
+          'alias',
+          'set_config',
+          'opt_in_capturing',
+          'opt_out_capturing',
+          'has_opted_in_capturing',
+          'has_opted_out_capturing',
+          'clear_opt_in_out_capturing',
+          'debug',
+        ];
+
+        for (const m of methods) {
+          g(target, m);
+        }
+
+        ph._i.push([apiKey, config, name]);
       };
 
-      window.posthog = ph;
+      ph.__SV = 1;
 
       // Inject official PostHog script tag asynchronously
       const script = document.createElement('script');
       script.type = 'text/javascript';
       script.async = true;
       script.crossOrigin = 'anonymous';
-      script.src = `${POSTHOG_HOST}/static/array.js`;
+      script.src = `${assetHost}/static/array.js`;
       script.onerror = () => {
         // Safe no-op on adblocker or network error
       };
+
       const firstScript = document.getElementsByTagName('script')[0];
       if (firstScript && firstScript.parentNode) {
         firstScript.parentNode.insertBefore(script, firstScript);
@@ -140,11 +168,10 @@ export function initAnalytics(): void {
 
     if (window.posthog && typeof window.posthog.init === 'function') {
       window.posthog.init(POSTHOG_KEY, {
-        api_host: POSTHOG_HOST,
+        api_host: rawHost,
         capture_pageview: false, // Explicitly manual for Next.js App Router
         autocapture: false, // Strict privacy: do not capture DOM elements or forms
         disable_session_recording: true, // Strict privacy: no screen recording
-        respect_dnt: true,
         persistence: 'localStorage+cookie',
       });
       isInitialized = true;
