@@ -7,7 +7,8 @@ import { useI18n } from '@/lib/i18n/context';
 import { trackSignupCtaClicked } from '@/lib/analytics';
 
 export function FinalCtaSection() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isHi = locale === 'hi';
 
   return (
     <section id="early-access" className="py-16 sm:py-24 bg-[#101F33] text-white relative overflow-hidden scroll-mt-16 sm:scroll-mt-20">
@@ -18,7 +19,7 @@ export function FinalCtaSection() {
         {/* Pill */}
         <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-[#12BBDD] border border-white/10 backdrop-blur-xs">
           <span className="flex h-2 w-2 rounded-full bg-[#12BBDD] animate-pulse" />
-          <span>30-Day Unrestricted Free Trial</span>
+          <span>{isHi ? '30-दिन का अप्रतिबंधित निःशुल्क ट्रायल' : '30-Day Unrestricted Free Trial'}</span>
         </div>
 
         {/* Headline & Body */}
@@ -54,15 +55,15 @@ export function FinalCtaSection() {
         <div className="pt-6 flex flex-wrap items-center justify-center gap-y-2 gap-x-8 text-xs text-slate-300">
           <span className="inline-flex items-center gap-1.5">
             <CheckCircle2 className="h-4 w-4 text-[#12BBDD]" />
-            No credit card required
+            {isHi ? 'कोई क्रेडिट कार्ड आवश्यक नहीं' : 'No credit card required'}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <CheckCircle2 className="h-4 w-4 text-[#12BBDD]" />
-            Full access to all features
+            {isHi ? 'सभी सुविधाओं का पूर्ण एक्सेस' : 'Full access to all features'}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <CheckCircle2 className="h-4 w-4 text-[#12BBDD]" />
-            Export your data to Excel anytime
+            {isHi ? 'कभी भी डेटा एक्सेल में निर्यात करें' : 'Export your data to Excel anytime'}
           </span>
         </div>
       </div>

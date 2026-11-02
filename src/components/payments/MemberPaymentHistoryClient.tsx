@@ -7,6 +7,7 @@ import { comparePaymentsDesc } from '@/lib/utils/memberships';
 import { Badge } from '@/components/ui/badge';
 import { ReceiptModal, type ReceiptData } from './ReceiptModal';
 import { Receipt } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/context';
 import type { Payment } from '@/types';
 
 interface MemberPaymentHistoryClientProps {
@@ -38,6 +39,7 @@ export function MemberPaymentHistoryClient({
   endDate,
   outstandingBalance,
 }: MemberPaymentHistoryClientProps) {
+  const { t } = useI18n();
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptData | null>(null);
 
   // Deduplicate and deterministically sort payments latest-first
@@ -46,7 +48,7 @@ export function MemberPaymentHistoryClient({
   ).sort(comparePaymentsDesc);
 
   if (sortedPayments.length === 0) {
-    return <p className="text-sm text-slate-500 py-6 text-center">No payment transactions recorded.</p>;
+    return <p className="text-sm text-slate-500 py-6 text-center">{t.payments.noTransactionsRecorded}</p>;
   }
 
   return (
@@ -86,12 +88,12 @@ export function MemberPaymentHistoryClient({
                   })
                 }
                 className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer min-h-[44px] min-w-[84px] tap-feedback"
-                title="View & Print Payment Receipt"
+                title={t.payments.viewReceipt}
               >
                 <Receipt className="h-4 w-4" />
-                Receipt
+                {t.payments.colReceipt}
               </button>
-              <Badge variant="success">Paid</Badge>
+              <Badge variant="success">{t.common.paid}</Badge>
             </div>
           </div>
         ))}

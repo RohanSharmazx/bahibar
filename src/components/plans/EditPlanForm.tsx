@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Alert } from '@/components/ui/alert';
+import { ArrowLeft } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/context';
 import type { MembershipPlan } from '@/types';
 
 interface EditPlanFormProps {
@@ -15,23 +17,33 @@ interface EditPlanFormProps {
 }
 
 export function EditPlanForm({ plan }: EditPlanFormProps) {
+  const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(
     updatePlanAction.bind(null, plan.id),
     null
   );
 
   return (
-    <Card>
+    <div className="space-y-6">
+      <Link
+        href="/plans"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        {t.plans.backToPlans}
+      </Link>
+
+      <Card>
       <CardHeader>
-        <CardTitle>Edit Membership Plan</CardTitle>
+        <CardTitle>{t.plans.editPlanTitle}</CardTitle>
         <CardDescription>
-          Updating this plan will apply to future enrollments. Existing members keep their historical snapshot prices.
+          {t.plans.editPlanSubtitle}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {state?.error && (
           <div className="mb-4">
-            <Alert variant="danger" title="Validation Error">
+            <Alert variant="danger" title={t.members.validationError}>
               {state.error}
             </Alert>
           </div>
@@ -39,7 +51,7 @@ export function EditPlanForm({ plan }: EditPlanFormProps) {
 
         <form action={formAction} className="space-y-4">
           <Input
-            label="Plan Name"
+            label={t.plans.planName}
             id="name"
             name="name"
             type="text"
@@ -50,7 +62,7 @@ export function EditPlanForm({ plan }: EditPlanFormProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Duration Value"
+              label={t.plans.durationValue}
               id="duration_value"
               name="duration_value"
               type="number"
@@ -61,20 +73,20 @@ export function EditPlanForm({ plan }: EditPlanFormProps) {
             />
 
             <Select
-              label="Duration Unit"
+              label={t.plans.durationUnit}
               id="duration_unit"
               name="duration_unit"
               required
               defaultValue={plan.duration_unit}
               options={[
-                { value: 'months', label: 'Months' },
-                { value: 'days', label: 'Days' },
+                { value: 'months', label: t.plans.months },
+                { value: 'days', label: t.plans.days },
               ]}
             />
           </div>
 
           <Input
-            label="Price (₹ INR)"
+            label={t.plans.price}
             id="price"
             name="price"
             type="number"
@@ -87,7 +99,7 @@ export function EditPlanForm({ plan }: EditPlanFormProps) {
 
           <div className="space-y-1.5">
             <label htmlFor="description" className="block text-sm font-medium text-slate-700">
-              Description (Optional)
+              {t.plans.description}
             </label>
             <textarea
               id="description"
@@ -101,15 +113,16 @@ export function EditPlanForm({ plan }: EditPlanFormProps) {
           <div className="pt-4 flex items-center justify-end gap-3">
             <Link href="/plans">
               <Button type="button" variant="outline" disabled={isPending}>
-                Cancel
+                {t.common.cancel}
               </Button>
             </Link>
             <Button type="submit" isLoading={isPending} disabled={isPending}>
-              Save Changes
+              {t.members.saveChangesBtn}
             </Button>
           </div>
         </form>
       </CardContent>
     </Card>
+    </div>
   );
 }

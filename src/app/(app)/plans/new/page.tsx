@@ -9,8 +9,10 @@ import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { ArrowLeft } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/context';
 
 export default function NewPlanPage() {
+  const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createPlanAction, null);
 
   return (
@@ -20,20 +22,20 @@ export default function NewPlanPage() {
         className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Plans
+        {t.plans.backToPlans}
       </Link>
 
       <Card>
         <CardHeader>
-          <CardTitle>Create Membership Plan</CardTitle>
+          <CardTitle>{t.plans.createPlanTitle}</CardTitle>
           <CardDescription>
-            Configure plan name, duration, and default price in INR (₹).
+            {t.plans.createPlanSubtitle}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {state?.error && (
             <div className="mb-6">
-              <Alert variant="danger" title="Error Saving Plan">
+              <Alert variant="danger" title={t.common.error}>
                 {state.error}
               </Alert>
             </div>
@@ -41,18 +43,18 @@ export default function NewPlanPage() {
 
           <form action={formAction} className="space-y-4">
             <Input
-              label="Plan Name"
+              label={t.plans.planName}
               id="name"
               name="name"
               type="text"
               required
-              placeholder="e.g. Monthly, 3 Months Special, Annual"
+              placeholder={t.plans.planNamePlaceholder}
               error={state?.fieldErrors?.name?.[0]}
             />
 
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Duration Value"
+                label={t.plans.durationValue}
                 id="duration_value"
                 name="duration_value"
                 type="number"
@@ -64,21 +66,21 @@ export default function NewPlanPage() {
               />
 
               <Select
-                label="Duration Unit"
+                label={t.plans.durationUnit}
                 id="duration_unit"
                 name="duration_unit"
                 required
                 defaultValue="months"
                 options={[
-                  { value: 'months', label: 'Months' },
-                  { value: 'days', label: 'Days' },
+                  { value: 'months', label: t.plans.months },
+                  { value: 'days', label: t.plans.days },
                 ]}
                 error={state?.fieldErrors?.duration_unit?.[0]}
               />
             </div>
 
             <Input
-              label="Price (₹ INR)"
+              label={t.plans.price}
               id="price"
               name="price"
               type="number"
@@ -91,13 +93,13 @@ export default function NewPlanPage() {
 
             <div className="space-y-1.5">
               <label htmlFor="description" className="block text-sm font-medium text-slate-700">
-                Description (Optional)
+                {t.plans.description}
               </label>
               <textarea
                 id="description"
                 name="description"
                 rows={3}
-                placeholder="Details like gym access hours, cardio + weights included, etc."
+                placeholder={t.plans.descriptionPlaceholder}
                 className="flex w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-600/20"
               />
             </div>
@@ -105,11 +107,11 @@ export default function NewPlanPage() {
             <div className="pt-4 flex items-center justify-end gap-3">
               <Link href="/plans">
                 <Button type="button" variant="outline">
-                  Cancel
+                  {t.common.cancel}
                 </Button>
               </Link>
               <Button type="submit" isLoading={isPending}>
-                Save Plan
+                {t.plans.savePlanButton}
               </Button>
             </div>
           </form>

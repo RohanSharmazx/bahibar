@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { BahiBarLogo } from '@/components/ui/logo';
-import { LanguageToggle } from '@/lib/i18n/context';
+import { LanguageDropdown } from '@/components/layout/LanguageDropdown';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Link href="/" className="inline-flex items-center group" aria-label="BahiBar Home">
           <BahiBarLogo size="md" showTagline={false} />
         </Link>
-        <LanguageToggle />
+        <LanguageDropdown />
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md px-4">

@@ -26,7 +26,7 @@ interface BenefitItem {
   storyStepLabel: string;
 }
 
-const IMPLEMENTED_BENEFITS: BenefitItem[] = [
+const BENEFITS_EN: BenefitItem[] = [
   {
     icon: Search,
     title: 'Find member records quickly',
@@ -81,8 +81,64 @@ const IMPLEMENTED_BENEFITS: BenefitItem[] = [
   },
 ];
 
+const BENEFITS_HI: BenefitItem[] = [
+  {
+    icon: Search,
+    title: 'सदस्य रिकॉर्ड तेजी से खोजें',
+    badge: 'उपलब्ध',
+    description: 'कागजी रजिस्टर पलटे बिना सदस्य के नाम या 10 अंकों के मोबाइल नंबर से तुरंत खोजें।',
+    details: [
+      'टाइप किए गए दूसरे अक्षर से तुरंत फ़िल्टर होता है',
+      'इमरजेंसी संपर्क, मेडिकल नोट्स और एक्टिव प्लान एक नज़र में',
+      'पन्ने फटने या रजिस्टर खोने का कोई जोखिम नहीं',
+    ],
+    storyStepHref: '#story',
+    storyStepLabel: 'डेमो में सदस्य खोज देखें →',
+  },
+  {
+    icon: CalendarClock,
+    title: 'समाप्ति और नवीनीकरण ट्रैक करें',
+    badge: 'उपलब्ध',
+    description: 'महीने के अंत और लीप-वर्ष समायोजन के साथ स्वचालित कैलेंडर-माह वर्षगांठ गणना।',
+    details: [
+      'स्पष्ट स्थिति संकेतक: सक्रिय, 7 दिनों में समाप्त, और समाप्त',
+      'सटीक तारीख गणना (जैसे 18 अक्टूबर + 3 माह = 18 जनवरी)',
+      'समाप्ति के अगले दिन से 1-क्लिक नवीनीकरण जारी रखें',
+    ],
+    storyStepHref: '#story',
+    storyStepLabel: 'डेमो में समाप्ति लॉजिक देखें →',
+  },
+  {
+    icon: IndianRupee,
+    title: 'भुगतान और बकाया फीस समझें',
+    badge: 'उपलब्ध',
+    description: 'सभी सदस्यों के बीच एकत्रित राजस्व और बकाया किस्तों का स्पष्ट वित्तीय हिसाब।',
+    details: [
+      'लाइव गणितीय गणना: तय शुल्क − कुल भुगतान = शेष बकाया',
+      'लेन-देन संदर्भ टैग के साथ UPI, नकद और कार्ड समर्थित',
+      'अपरिवर्तनीय भुगतान रिकॉर्ड जो पुराने डेटा की सुरक्षा करता है',
+    ],
+    storyStepHref: '#story',
+    storyStepLabel: 'डेमो में भुगतान प्रविष्टि देखें →',
+  },
+  {
+    icon: Receipt,
+    title: 'रसीद बनाएं और रिकॉर्ड निर्यात करें',
+    badge: 'उपलब्ध',
+    description: '1 टैप में साफ रसीद बनाएं और बिना किसी लॉक-इन के कभी भी अपना पूरा डेटाबेस डाउनलोड करें।',
+    details: [
+      'क्लाइंट-साइड पीडीएफ वाउचर और पहले से स्वरूपित व्हाट्सएप स्लिप',
+      'डेस्क और थर्मल प्रिंटर के लिए सीधा ब्राउज़र प्रिंटिंग',
+      '1-क्लिक UTF-8 BOM CSV एक्सेल निर्यात',
+    ],
+    storyStepHref: '#story',
+    storyStepLabel: 'डेमो में रसीद वाउचर देखें →',
+  },
+];
+
 export function BenefitsSection() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const benefits = locale === 'hi' ? BENEFITS_HI : BENEFITS_EN;
 
   return (
     <section id="benefits" className="py-16 sm:py-24 bg-white border-b border-slate-200/80 scroll-mt-16 sm:scroll-mt-20">
@@ -102,7 +158,7 @@ export function BenefitsSection() {
 
         {/* 4 Core Implemented Benefits Grid */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-          {IMPLEMENTED_BENEFITS.map((b, idx) => {
+          {benefits.map((b, idx) => {
             const Icon = b.icon;
             return (
               <div

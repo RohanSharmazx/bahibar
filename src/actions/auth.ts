@@ -17,6 +17,7 @@ import {
   type LocalUser,
 } from '@/lib/local-db';
 import { LOCAL_SESSION_COOKIE, ACTIVE_GYM_COOKIE, LOCAL_WORKSPACES_COOKIE, type LocalSession } from '@/lib/supabase/auth-helpers';
+import { resolveSafeBaseUrl } from '@/lib/utils/url';
 import crypto from 'crypto';
 
 export type ActionState = {
@@ -28,17 +29,25 @@ export type ActionState = {
 };
 
 async function getBaseUrl(): Promise<string> {
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, '');
-  }
+  let reqHost: string | null = null;
+  let reqProto: string | null = null;
+  let reqOrigin: string | null = null;
+
   try {
     const headerList = await headers();
-    const host = headerList.get('x-forwarded-host') || headerList.get('host') || 'localhost:3000';
-    const proto = headerList.get('x-forwarded-proto') || (host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'http');
-    return `${proto}://${host}`;
+    reqHost = headerList.get('x-forwarded-host') || headerList.get('host');
+    reqProto = headerList.get('x-forwarded-proto');
+    reqOrigin = headerList.get('origin');
   } catch {
-    return 'http://localhost:3000';
+    // Outside request context (e.g. tests or background jobs)
   }
+
+  return resolveSafeBaseUrl({
+    origin: reqOrigin,
+    host: reqHost,
+    proto: reqProto,
+    siteUrlEnv: process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL,
+  });
 }
 
 export async function loginAction(
@@ -305,10 +314,31 @@ export async function logoutAction(): Promise<void> {
     cookieStore.delete(LOCAL_SESSION_COOKIE);
     cookieStore.delete(LOCAL_WORKSPACES_COOKIE);
   } else {
-    const supabase = await createClient();
-    await supabase.auth.signOut();
+    try {
+      const supabase = await createClient();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error during Supabase signOut:', err);
+    }
   }
+
+  // Explicitly sweep and delete all Supabase auth token cookies and workspace cookies
+  const allCookies = cookieStore.getAll();
+  for (const cookie of allCookies) {
+    if (
+      cookie.name.startsWith('sb-') ||
+      cookie.name.includes('auth-token') ||
+      cookie.name === ACTIVE_GYM_COOKIE ||
+      cookie.name === LOCAL_SESSION_COOKIE ||
+      cookie.name === LOCAL_WORKSPACES_COOKIE
+    ) {
+      cookieStore.delete(cookie.name);
+    }
+  }
+
   cookieStore.delete(ACTIVE_GYM_COOKIE);
+  cookieStore.delete(LOCAL_SESSION_COOKIE);
+  cookieStore.delete(LOCAL_WORKSPACES_COOKIE);
   redirect('/login');
 }
 

@@ -13,17 +13,19 @@ import {
 import { useState } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Download, Settings, UserPlus } from 'lucide-react';
-
-const mobileTabs = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Members', href: '/members', icon: Users },
-  { name: 'Plans', href: '/plans', icon: CreditCard },
-  { name: 'Payments', href: '/payments', icon: IndianRupee },
-];
+import { useI18n } from '@/lib/i18n/context';
 
 export function BottomNav() {
   const pathname = usePathname();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const { t } = useI18n();
+
+  const mobileTabs = [
+    { name: t.bottomNav.dashboard, href: '/dashboard', icon: LayoutDashboard },
+    { name: t.bottomNav.members, href: '/members', icon: Users },
+    { name: t.bottomNav.plans, href: '/plans', icon: CreditCard },
+    { name: t.bottomNav.payments, href: '/payments', icon: IndianRupee },
+  ];
 
   return (
     <>
@@ -34,7 +36,7 @@ export function BottomNav() {
             const Icon = item.icon;
             return (
               <Link
-                key={item.name}
+                key={item.href}
                 href={item.href}
                 className={cn(
                   'flex flex-col items-center justify-center py-1 text-[11px] font-medium transition-colors h-full',
@@ -42,7 +44,7 @@ export function BottomNav() {
                 )}
               >
                 <Icon className={cn('h-5 w-5 mb-0.5', isActive ? 'text-sky-600' : 'text-slate-400')} />
-                <span>{item.name}</span>
+                <span className="truncate max-w-[56px] text-center">{item.name}</span>
               </Link>
             );
           })}
@@ -54,7 +56,7 @@ export function BottomNav() {
             className="flex flex-col items-center justify-center py-1 text-[11px] font-medium text-slate-500 hover:text-slate-900 transition-colors h-full cursor-pointer"
           >
             <Menu className="h-5 w-5 mb-0.5 text-slate-400" />
-            <span>More</span>
+            <span>{t.bottomNav.more}</span>
           </button>
         </div>
       </nav>
@@ -63,7 +65,7 @@ export function BottomNav() {
       <Modal
         isOpen={isMoreOpen}
         onClose={() => setIsMoreOpen(false)}
-        title="More Actions"
+        title={t.bottomNav.moreActions}
         maxWidth="sm"
       >
         <div className="space-y-2 py-2">
@@ -74,8 +76,8 @@ export function BottomNav() {
           >
             <UserPlus className="h-5 w-5 text-sky-600" />
             <div>
-              <p>Add New Member</p>
-              <p className="text-xs font-normal text-sky-600">Register new gym member</p>
+              <p>{t.bottomNav.addNewMember}</p>
+              <p className="text-xs font-normal text-sky-600">{t.bottomNav.registerMemberDesc}</p>
             </div>
           </Link>
 
@@ -86,8 +88,8 @@ export function BottomNav() {
           >
             <Download className="h-5 w-5 text-slate-500" />
             <div>
-              <p>Export Data</p>
-              <p className="text-xs text-slate-400">Download CSV member & payment records</p>
+              <p>{t.bottomNav.exportData}</p>
+              <p className="text-xs text-slate-400">{t.bottomNav.exportDataDesc}</p>
             </div>
           </Link>
 
@@ -98,8 +100,8 @@ export function BottomNav() {
           >
             <Settings className="h-5 w-5 text-slate-500" />
             <div>
-              <p>Gym Settings</p>
-              <p className="text-xs text-slate-400">Update gym name and contact details</p>
+              <p>{t.bottomNav.gymSettings}</p>
+              <p className="text-xs text-slate-400">{t.bottomNav.gymSettingsDesc}</p>
             </div>
           </Link>
         </div>

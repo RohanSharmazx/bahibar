@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { BahiBarLogo } from '@/components/ui/logo';
-import { LanguageToggle, useI18n } from '@/lib/i18n/context';
+import { LanguageDropdown } from '@/components/layout/LanguageDropdown';
+import { useI18n } from '@/lib/i18n/context';
 
 interface LandingHeaderProps {
   userLoggedIn?: boolean;
@@ -47,7 +48,7 @@ export function LandingHeader({ userLoggedIn }: LandingHeaderProps) {
 
         {/* Desktop Actions */}
         <div className="hidden sm:flex items-center gap-3">
-          <LanguageToggle />
+          <LanguageDropdown />
 
           {userLoggedIn ? (
             <Link
@@ -77,7 +78,7 @@ export function LandingHeader({ userLoggedIn }: LandingHeaderProps) {
 
         {/* Mobile Header Actions (Visible on small screens) */}
         <div className="flex sm:hidden items-center gap-2">
-          <LanguageToggle />
+          <LanguageDropdown />
 
           {userLoggedIn ? (
             <Link

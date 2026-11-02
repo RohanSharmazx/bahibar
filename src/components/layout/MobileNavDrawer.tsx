@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ import {
   LogOut,
   ShieldCheck,
   ShieldAlert,
+  Loader2,
 } from 'lucide-react';
 import { BahiBarIcon } from '@/components/ui/logo';
 import { logoutAction } from '@/actions/auth';
@@ -42,6 +43,15 @@ export function MobileNavDrawer({
   const pathname = usePathname();
   const drawerRef = useRef<HTMLDivElement>(null);
   const { t } = useI18n();
+  const [isLoggingOut, startLogoutTransition] = useTransition();
+
+  const handleLogout = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    resetAnalytics();
+    startLogoutTransition(async () => {
+      await logoutAction();
+    });
+  };
 
   const mainNavigation = [
     { name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
@@ -254,17 +264,21 @@ export function MobileNavDrawer({
             </div>
             <form
               action={logoutAction}
-              onSubmit={() => {
-                resetAnalytics();
-              }}
+              method="post"
+              onSubmit={handleLogout}
             >
               <button
                 type="submit"
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                disabled={isLoggingOut}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-50"
                 aria-label="Sign out"
               >
-                <LogOut className="h-4 w-4" />
-                <span>{t('common.signOut')}</span>
+                {isLoggingOut ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
+                ) : (
+                  <LogOut className="h-4 w-4" />
+                )}
+                <span>{isLoggingOut ? 'Signing out...' : t('common.signOut')}</span>
               </button>
             </form>
           </div>

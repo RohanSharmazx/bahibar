@@ -77,7 +77,7 @@ export async function createGatewayOrder(params: {
       throw new Error(`Razorpay order creation failed: ${errText}`);
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as { id: string };
     gatewayOrderId = data.id;
   } else {
     // Sandbox / Test fallback order generator

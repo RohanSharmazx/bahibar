@@ -43,7 +43,8 @@ const DEMO_PLANS: DemoPlan[] = [
 ];
 
 export function ProductStorySection() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isHi = locale === 'hi';
   const [activeStep, setActiveStep] = useState<StoryStep>('register');
 
   // Step 1: Member Registration State
@@ -188,10 +189,10 @@ export function ProductStorySection() {
         <div className="mt-10 max-w-3xl mx-auto">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
             {[
-              { id: 'register', number: '1', title: t('landing.step1Title').split(':')[1]?.trim() || 'Register', subtitle: 'New Enrollment' },
-              { id: 'payment', number: '2', title: t('landing.step2Title').split(':')[1]?.trim() || 'Payment', subtitle: 'Record Fees' },
-              { id: 'dues', number: '3', title: t('landing.step3Title').split(':')[1]?.trim() || 'Ledger', subtitle: 'Track Dues' },
-              { id: 'receipt', number: '4', title: t('landing.step4Title').split(':')[1]?.trim() || 'Receipt', subtitle: 'Instant Voucher' },
+              { id: 'register', number: '1', title: t('landing.step1Title').split(':')[1]?.trim() || 'Register', subtitle: isHi ? 'नया नामांकन' : 'New Enrollment' },
+              { id: 'payment', number: '2', title: t('landing.step2Title').split(':')[1]?.trim() || 'Payment', subtitle: isHi ? 'फीस दर्ज करें' : 'Record Fees' },
+              { id: 'dues', number: '3', title: t('landing.step3Title').split(':')[1]?.trim() || 'Ledger', subtitle: isHi ? 'बकाया ट्रैक करें' : 'Track Dues' },
+              { id: 'receipt', number: '4', title: t('landing.step4Title').split(':')[1]?.trim() || 'Receipt', subtitle: isHi ? 'तुरंत वाउचर' : 'Instant Voucher' },
             ].map((step) => {
               const isActive = activeStep === step.id;
               return (
@@ -268,7 +269,7 @@ export function ProductStorySection() {
                     onClick={() => setActiveStep('payment')}
                     className="inline-flex items-center gap-2 rounded-xl bg-[#087FDB] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#0669b6] active:bg-[#055393] transition-all cursor-pointer min-h-[44px] tap-feedback"
                   >
-                    <span>Proceed to Step 2: Record Payment</span>
+                    <span>{isHi ? 'चरण 2 पर जाएं: फीस दर्ज करें' : 'Proceed to Step 2: Record Payment'}</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -310,7 +311,7 @@ export function ProductStorySection() {
                     onClick={() => setActiveStep('dues')}
                     className="inline-flex items-center gap-2 rounded-xl bg-[#087FDB] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#0669b6] active:bg-[#055393] transition-all cursor-pointer min-h-[44px] tap-feedback"
                   >
-                    <span>Proceed to Step 3: Track Dues</span>
+                    <span>{isHi ? 'चरण 3 पर जाएं: बकाया ट्रैक करें' : 'Proceed to Step 3: Track Dues'}</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                   <button
@@ -318,7 +319,7 @@ export function ProductStorySection() {
                     onClick={() => setActiveStep('register')}
                     className="text-xs text-slate-500 hover:text-slate-800 underline min-h-[44px] flex items-center"
                   >
-                    ← Back to Registration
+                    {isHi ? '← पंजीकरण पर वापस' : '← Back to Registration'}
                   </button>
                 </div>
               </div>
@@ -358,7 +359,7 @@ export function ProductStorySection() {
                     onClick={() => setActiveStep('receipt')}
                     className="inline-flex items-center gap-2 rounded-xl bg-[#087FDB] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#0669b6] active:bg-[#055393] transition-all cursor-pointer min-h-[44px] tap-feedback"
                   >
-                    <span>Proceed to Step 4: Generate Receipt</span>
+                    <span>{isHi ? 'चरण 4 पर जाएं: रसीद बनाएं' : 'Proceed to Step 4: Generate Receipt'}</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                   <button
@@ -366,7 +367,7 @@ export function ProductStorySection() {
                     onClick={() => setActiveStep('payment')}
                     className="text-xs text-slate-500 hover:text-slate-800 underline min-h-[44px] flex items-center"
                   >
-                    ← Back to Payment
+                    {isHi ? '← भुगतान पर वापस' : '← Back to Payment'}
                   </button>
                 </div>
               </div>
@@ -407,14 +408,14 @@ export function ProductStorySection() {
                     className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-all cursor-pointer min-h-[44px] tap-feedback"
                   >
                     <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
-                    <span>Reset Simulation</span>
+                    <span>{isHi ? 'सिमुलेशन रीसेट करें' : 'Reset Simulation'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveStep('register')}
                     className="text-xs text-slate-500 hover:text-slate-800 underline min-h-[44px] flex items-center"
                   >
-                    Start From Step 1
+                    {isHi ? 'चरण 1 से शुरू करें' : 'Start From Step 1'}
                   </button>
                 </div>
               </div>

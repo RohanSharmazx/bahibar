@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert } from '@/components/ui/alert';
 import { ArrowLeft, Calendar, IndianRupee, Sparkles } from 'lucide-react';
 import { trackFirstMemberAdded } from '@/lib/analytics';
+import { useI18n } from '@/lib/i18n/context';
 import type { MembershipPlan } from '@/types';
 
 interface AddMemberFormProps {
@@ -19,6 +20,7 @@ interface AddMemberFormProps {
 }
 
 export function AddMemberForm({ plans }: AddMemberFormProps) {
+  const { t } = useI18n();
   const [selectedPlanId, setSelectedPlanId] = useState<string>(plans[0]?.id || '');
   const [startDate, setStartDate] = useState<string>(getTodayISO());
   const [agreedPrice, setAgreedPrice] = useState<string>(
@@ -91,12 +93,12 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
         className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Members
+        {t.members.backToMemberList}
       </Link>
 
       <form onSubmit={handleFormSubmit} className="space-y-6">
         {error && (
-          <Alert variant="danger" title="Registration Error">
+          <Alert variant="danger" title={t.members.registrationError}>
             {error}
           </Alert>
         )}
@@ -104,13 +106,13 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
         {/* Section 1: Member Personal Details */}
         <Card>
           <CardHeader>
-            <CardTitle>Member Details</CardTitle>
-            <CardDescription>Primary contact information</CardDescription>
+            <CardTitle>{t.members.personalDetails}</CardTitle>
+            <CardDescription>{t.members.addNewMemberSubtitle}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
-                label="Full Name"
+                label={t.members.fullName}
                 id="full_name"
                 name="full_name"
                 required
@@ -118,20 +120,20 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 error={fieldErrors.full_name?.[0]}
               />
               <Input
-                label="Mobile Number"
+                label={t.members.mobileNumber}
                 id="mobile"
                 name="mobile"
                 type="tel"
                 required
                 placeholder="e.g. 9876543210"
-                helperText="Must be 10 to 15 digits and unique per member"
+                helperText={t.members.mobileHelperText}
                 error={fieldErrors.mobile?.[0]}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
-                label="Email (Optional)"
+                label={t.members.emailAddress}
                 id="email"
                 name="email"
                 type="email"
@@ -139,19 +141,19 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 error={fieldErrors.email?.[0]}
               />
               <Select
-                label="Gender"
+                label={t.members.gender}
                 id="gender"
                 name="gender"
                 error={fieldErrors.gender?.[0]}
                 options={[
                   { value: '', label: 'Select gender...' },
-                  { value: 'male', label: 'Male' },
-                  { value: 'female', label: 'Female' },
-                  { value: 'other', label: 'Other' },
+                  { value: 'male', label: t.members.male },
+                  { value: 'female', label: t.members.female },
+                  { value: 'other', label: t.members.other },
                 ]}
               />
               <Input
-                label="Date of Birth"
+                label={t.members.dateOfBirth}
                 id="date_of_birth"
                 name="date_of_birth"
                 type="date"
@@ -161,14 +163,14 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
-                label="Emergency Contact (Optional)"
+                label={t.members.emergencyContact}
                 id="emergency_contact"
                 name="emergency_contact"
                 placeholder="Parent/Spouse name & phone"
                 error={fieldErrors.emergency_contact?.[0]}
               />
               <Input
-                label="Address / Area (Optional)"
+                label={t.members.address}
                 id="address"
                 name="address"
                 placeholder="e.g. Sector 14, Main Road"
@@ -178,13 +180,13 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
 
             <div className="space-y-1.5">
               <label htmlFor="notes" className="block text-sm font-medium text-slate-700">
-                Notes (Optional)
+                {t.members.notesLabel}
               </label>
               <textarea
                 id="notes"
                 name="notes"
                 rows={2}
-                placeholder="Health notes, trainer preferences, locker number..."
+                placeholder={t.members.notesPlaceholder}
                 className="flex w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-600/20"
               />
               {fieldErrors.notes?.[0] && (
@@ -197,17 +199,17 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
         {/* Section 2: Membership Enrollment & Automatic Expiry */}
         <Card>
           <CardHeader>
-            <CardTitle>Select Plan & Duration</CardTitle>
+            <CardTitle>{t.members.selectPlanDurationTitle}</CardTitle>
             <CardDescription>
-              Expiry date and fees calculate automatically based on the chosen plan.
+              {t.members.selectPlanDurationDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {plans.length === 0 ? (
-              <Alert variant="warning" title="No Plans Configured">
+              <Alert variant="warning" title={t.members.noPlansConfiguredWarning}>
                 Please{' '}
                 <Link href="/plans/new" className="font-semibold underline">
-                  create a membership plan
+                  {t.members.createPlanFirstPrompt}
                 </Link>{' '}
                 first before registering members.
               </Alert>
@@ -216,7 +218,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label htmlFor="plan_select" className="block text-sm font-medium text-slate-700">
-                      Membership Plan <span className="text-rose-500">*</span>
+                      {t.members.membershipPlanLabel} <span className="text-rose-500">*</span>
                     </label>
                     <select
                       id="plan_select"
@@ -236,7 +238,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                   </div>
 
                   <Input
-                    label="Start Date"
+                    label={t.members.startDateLabel}
                     id="start_date"
                     type="date"
                     required
@@ -254,14 +256,14 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                     </div>
                     <div>
                       <p className="text-xs font-semibold uppercase text-sky-800">
-                        Calculated Expiry Date
+                        {t.members.calculatedExpiryLabel}
                       </p>
                       <p className="text-lg font-bold text-sky-950">{calculatedEndDate}</p>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-xs text-sky-700">Standard Plan Price:</span>
+                    <span className="text-xs text-sky-700">{t.members.agreedFeeLabel}:</span>
                     <p className="text-base font-bold text-sky-900">
                       {currentPlan ? formatCurrency(currentPlan.price) : '₹0'}
                     </p>
@@ -270,7 +272,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <Input
-                    label="Agreed Price (₹ INR)"
+                    label={t.members.agreedFeeLabel}
                     id="agreed_price"
                     type="text"
                     inputMode="decimal"
@@ -288,7 +290,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                     }}
                     helperText={
                       currentPlan && agreedPrice !== '' && parseFloat(agreedPrice) < currentPlan.price
-                        ? `Discount applied: ${formatCurrency(currentPlan.price - parseFloat(agreedPrice))}`
+                        ? `Discount: ${formatCurrency(currentPlan.price - parseFloat(agreedPrice))}`
                         : undefined
                     }
                   />
@@ -301,15 +303,15 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
         {/* Section 3: Initial Payment Recording */}
         <Card>
           <CardHeader>
-            <CardTitle>Initial Payment Collection</CardTitle>
+            <CardTitle>{t.members.recordPaymentModalTitle}</CardTitle>
             <CardDescription>
-              Record the first payment collected (full or partial advance).
+              {t.members.recordPaymentModalDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
-                label="Amount Paid Now (₹ INR)"
+                label={t.members.initialPaymentLabel}
                 id="payment_amount"
                 type="text"
                 inputMode="decimal"
@@ -319,7 +321,7 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
                   const sanitized = sanitizeCurrencyInput(e.target.value);
                   setPaymentAmount(sanitized);
                 }}
-                helperText={`Outstanding Balance: ${formatCurrency(
+                helperText={`${t.members.outstandingDueLabel}: ${formatCurrency(
                   Math.max(
                     0,
                     (agreedPrice === '' ? 0 : parseFloat(agreedPrice)) -
@@ -329,16 +331,16 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
               />
 
               <Select
-                label="Payment Method"
+                label={t.members.paymentModeLabel}
                 id="payment_method"
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 error={fieldErrors.payment_method?.[0]}
                 options={[
-                  { value: 'cash', label: 'Cash' },
-                  { value: 'upi', label: 'UPI (GPay / PhonePe / Paytm)' },
-                  { value: 'card', label: 'Debit / Credit Card' },
-                  { value: 'other', label: 'Other' },
+                  { value: 'cash', label: t.members.methodCash },
+                  { value: 'upi', label: t.members.methodUpi },
+                  { value: 'card', label: t.members.methodCard },
+                  { value: 'other', label: t.members.methodOther },
                 ]}
               />
             </div>
@@ -348,11 +350,11 @@ export function AddMemberForm({ plans }: AddMemberFormProps) {
         <div className="flex items-center justify-end gap-3 pt-4">
           <Link href="/members">
             <Button type="button" variant="outline">
-              Cancel
+              {t.common.cancel}
             </Button>
           </Link>
           <Button type="submit" size="lg" isLoading={isPending} disabled={plans.length === 0}>
-            Register Member & Save Record
+            {isPending ? t.common.saving : t.members.saveMemberButton}
           </Button>
         </div>
       </form>

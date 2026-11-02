@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
-import { getUser, getUserGymStaff } from '@/lib/supabase/auth-helpers';
+import { getUser } from '@/lib/supabase/auth-helpers';
+import { getCurrentGymData } from '@/actions/gym';
 import { OnboardingForm } from './OnboardingForm';
 
 export const dynamic = 'force-dynamic';
@@ -19,8 +20,8 @@ export default async function OnboardingPage({
   const isNewWorkspace = resolvedParams?.new_workspace === 'true';
 
   if (!isNewWorkspace) {
-    const staff = await getUserGymStaff();
-    if (staff) {
+    const { gym } = await getCurrentGymData();
+    if (gym) {
       redirect('/dashboard');
     }
   }

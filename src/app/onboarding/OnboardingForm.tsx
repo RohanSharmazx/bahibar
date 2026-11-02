@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { BahiBarLogo } from '@/components/ui/logo';
-import { LanguageToggle, useI18n } from '@/lib/i18n/context';
+import { LanguageDropdown } from '@/components/layout/LanguageDropdown';
+import { useI18n } from '@/lib/i18n/context';
 import { ArrowLeft, LogOut } from 'lucide-react';
 
 interface OnboardingFormProps {
@@ -29,16 +30,16 @@ export function OnboardingForm({ isNewWorkspace }: OnboardingFormProps) {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors py-2 px-1 min-h-[44px]"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>{isNewWorkspace ? 'Return to Dashboard' : 'Back to Home'}</span>
+          <span>{isNewWorkspace ? t.onboarding.returnToDashboard : t.onboarding.backToHome}</span>
         </Link>
 
         <div className="flex items-center gap-2">
-          <LanguageToggle />
+          <LanguageDropdown />
           <form action={logoutAction}>
             <button
               type="submit"
               className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-white border border-rose-200 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer min-h-[44px]"
-              title="Sign Out"
+              title={t.common.signOut}
             >
               <LogOut className="h-3.5 w-3.5" />
               <span>{t.common.signOut}</span>
@@ -53,19 +54,19 @@ export function OnboardingForm({ isNewWorkspace }: OnboardingFormProps) {
             <BahiBarLogo size="md" showTagline={true} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            {isNewWorkspace ? 'Create an Additional Gym Workspace' : 'Set up your Gym Profile'}
+            {isNewWorkspace ? t.onboarding.newWorkspaceTitle : t.onboarding.title}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             {isNewWorkspace
-              ? 'Add another gym facility under your account. You can switch between them anytime.'
-              : 'This information will appear on membership summaries, receipts, and reports.'}
+              ? t.onboarding.newWorkspaceSubtitle
+              : t.onboarding.subtitle}
           </p>
         </div>
 
         <div className="bg-white py-8 px-6 shadow-sm rounded-2xl border border-slate-200 sm:px-10">
           {state?.error && (
             <div className="mb-6">
-              <Alert variant="danger" title="Gym Setup Error">
+              <Alert variant="danger" title={t.common.error}>
                 <p>{state.error}</p>
                 {state.error.includes('Authentication required') && (
                   <div className="mt-3">
@@ -89,18 +90,18 @@ export function OnboardingForm({ isNewWorkspace }: OnboardingFormProps) {
             className="space-y-4"
           >
             <Input
-              label="Gym Name"
+              label={t.onboarding.gymName}
               id="name"
               name="name"
               type="text"
               required
               placeholder="e.g. Iron Fitness Center"
-              helperText="The public name of your gym"
+              helperText={t.onboarding.gymNameHelp}
               error={state?.fieldErrors?.name?.[0]}
             />
 
             <Input
-              label="Owner / Manager Name"
+              label={t.onboarding.ownerName}
               id="owner_name"
               name="owner_name"
               type="text"
@@ -110,19 +111,19 @@ export function OnboardingForm({ isNewWorkspace }: OnboardingFormProps) {
             />
 
             <Input
-              label="Contact Phone Number"
+              label={t.onboarding.contactPhone}
               id="contact_number"
               name="contact_number"
               type="tel"
               required
               placeholder="e.g. 9876543210"
-              helperText="For gym inquiries and official records"
+              helperText={t.onboarding.contactPhoneHelp}
               error={state?.fieldErrors?.contact_number?.[0]}
             />
 
             <div className="space-y-1.5">
               <label htmlFor="address" className="block text-sm font-medium text-slate-700">
-                Gym Address (Optional)
+                {t.onboarding.addressOptional}
               </label>
               <textarea
                 id="address"
@@ -140,7 +141,7 @@ export function OnboardingForm({ isNewWorkspace }: OnboardingFormProps) {
 
             <div className="pt-4">
               <Button type="submit" className="w-full text-base min-h-[44px]" size="lg" isLoading={isPending}>
-                {isNewWorkspace ? 'Create Workspace & Open Dashboard' : 'Complete Setup & Go to Dashboard'}
+                {t.onboarding.createButton}
               </Button>
             </div>
           </form>

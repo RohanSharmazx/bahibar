@@ -14,6 +14,7 @@ import { Select } from '@/components/ui/select';
 import { Alert } from '@/components/ui/alert';
 import { RefreshCw, IndianRupee, Archive, RotateCcw, Sparkles } from 'lucide-react';
 import { trackMembershipRenewed, trackPaymentRecorded } from '@/lib/analytics';
+import { useI18n } from '@/lib/i18n/context';
 import type { MembershipPlan, MemberMembership } from '@/types';
 
 interface MemberActionsClientProps {
@@ -32,6 +33,7 @@ export function MemberActionsClient({
   availablePlans,
 }: MemberActionsClientProps) {
   const router = useRouter();
+  const { t } = useI18n();
   // Modal states
   const [isRenewOpen, setIsRenewOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -164,7 +166,7 @@ export function MemberActionsClient({
   };
 
   const handleArchiveToggle = () => {
-    if (confirm(isArchived ? 'Restore this member?' : 'Archive this member from active directory?')) {
+    if (confirm(isArchived ? t.members.restoreConfirm : t.members.archiveConfirm)) {
       startTransition(async () => {
         if (isArchived) {
           await restoreMemberAction(memberId);
@@ -185,7 +187,7 @@ export function MemberActionsClient({
           className="gap-2"
         >
           <RefreshCw className="h-4 w-4" />
-          Renew Membership
+          {t.members.renewMembership}
         </Button>
 
         {outstandingBalance > 0 && (
@@ -196,7 +198,7 @@ export function MemberActionsClient({
             className="gap-2"
           >
             <IndianRupee className="h-4 w-4" />
-            Record Payment ({formatCurrency(outstandingBalance)})
+            {t.members.recordPaymentModalTitle} ({formatCurrency(outstandingBalance)})
           </Button>
         )}
 
@@ -209,12 +211,12 @@ export function MemberActionsClient({
           {isArchived ? (
             <>
               <RotateCcw className="h-4 w-4" />
-              Restore Member
+              {t.members.restoreMemberBtn}
             </>
           ) : (
             <>
               <Archive className="h-4 w-4 text-slate-400" />
-              Archive
+              {t.members.archiveMemberBtn}
             </>
           )}
         </Button>
@@ -224,12 +226,12 @@ export function MemberActionsClient({
       <Modal
         isOpen={isRenewOpen}
         onClose={() => setIsRenewOpen(false)}
-        title="Renew Membership"
-        description="Select plan and dates to continue gym membership without losing history"
+        title={t.members.renewModalTitle}
+        description={t.members.renewModalDesc}
       >
         {error && (
           <div className="mb-4">
-            <Alert variant="danger" title="Renewal Error">
+            <Alert variant="danger" title={t.members.renewalError}>
               {error}
             </Alert>
           </div>
@@ -237,7 +239,9 @@ export function MemberActionsClient({
 
         <form onSubmit={handleRenewSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700">Select Plan</label>
+            <label className="block text-sm font-medium text-slate-700">
+              {t.members.membershipPlanLabel}
+            </label>
             <select
               value={renewPlanId}
               onChange={(e) => {
@@ -260,19 +264,18 @@ export function MemberActionsClient({
           </div>
 
           <Input
-            label="Renewal Start Date"
+            label={t.members.startDateLabel}
             type="date"
             required
             value={renewStartDate}
             onChange={(e) => setRenewStartDate(e.target.value)}
-            helperText="Auto-set to continue seamlessly from previous membership"
           />
 
           <div className="rounded-xl bg-sky-50 p-3.5 border border-sky-100 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Sparkles className="h-4 w-4 text-sky-600" />
               <div>
-                <p className="text-xs text-sky-700 font-medium">New Expiry Date</p>
+                <p className="text-xs text-sky-700 font-medium">{t.members.newExpiryDate}</p>
                 <p className="text-sm font-bold text-sky-950">{renewalCalculatedEndDate}</p>
               </div>
             </div>
@@ -282,7 +285,7 @@ export function MemberActionsClient({
           </div>
 
           <Input
-            label="Agreed Price (₹ INR)"
+            label={t.members.agreedFeeLabel}
             type="text"
             inputMode="decimal"
             required
@@ -300,7 +303,7 @@ export function MemberActionsClient({
 
           <div className="grid grid-cols-2 gap-3 pt-1">
             <Input
-              label="Payment Amount (₹)"
+              label={t.members.paymentAmountLabel}
               type="text"
               inputMode="decimal"
               value={renewPaymentAmount}
@@ -310,24 +313,24 @@ export function MemberActionsClient({
               }}
             />
             <Select
-              label="Payment Method"
+              label={t.members.paymentModeLabel}
               value={renewPaymentMethod}
               onChange={(e) => setRenewPaymentMethod(e.target.value)}
               options={[
-                { value: 'cash', label: 'Cash' },
-                { value: 'upi', label: 'UPI' },
-                { value: 'card', label: 'Card' },
-                { value: 'other', label: 'Other' },
+                { value: 'cash', label: t.members.methodCash },
+                { value: 'upi', label: t.members.methodUpi },
+                { value: 'card', label: t.members.methodCard },
+                { value: 'other', label: t.members.methodOther },
               ]}
             />
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => setIsRenewOpen(false)}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button type="submit" isLoading={isPending}>
-              Confirm Renewal
+              {t.members.confirmRenewBtn}
             </Button>
           </div>
         </form>
@@ -337,12 +340,12 @@ export function MemberActionsClient({
       <Modal
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
-        title="Record Fee Payment"
-        description={`Record cash or UPI payment towards dues of ${formatCurrency(outstandingBalance)}`}
+        title={t.members.recordPaymentModalTitle}
+        description={t.members.recordPaymentModalDesc}
       >
         {error && (
           <div className="mb-4">
-            <Alert variant="danger" title="Payment Error">
+            <Alert variant="danger" title={t.members.paymentError}>
               {error}
             </Alert>
           </div>
@@ -350,29 +353,29 @@ export function MemberActionsClient({
 
         <form onSubmit={handlePaymentSubmit} className="space-y-4">
           <Input
-            label="Amount Paid (₹ INR)"
+            label={t.members.paymentAmountLabel}
             type="text"
             inputMode="decimal"
             required
             value={payAmount}
             onChange={(e) => setPayAmount(sanitizeCurrencyInput(e.target.value))}
-            helperText={`Maximum payable: ${formatCurrency(outstandingBalance)}`}
+            helperText={`${t.members.outstandingDueLabel}: ${formatCurrency(outstandingBalance)}`}
           />
 
           <Select
-            label="Payment Method"
+            label={t.members.paymentModeLabel}
             value={payMethod}
             onChange={(e) => setPayMethod(e.target.value)}
             options={[
-              { value: 'cash', label: 'Cash' },
-              { value: 'upi', label: 'UPI (GPay / PhonePe / Paytm)' },
-              { value: 'card', label: 'Card' },
-              { value: 'other', label: 'Other' },
+              { value: 'cash', label: t.members.methodCash },
+              { value: 'upi', label: t.members.methodUpi },
+              { value: 'card', label: t.members.methodCard },
+              { value: 'other', label: t.members.methodOther },
             ]}
           />
 
           <Input
-            label="Payment Date"
+            label={t.members.paymentDateLabel}
             type="date"
             required
             value={payDate}
@@ -380,14 +383,14 @@ export function MemberActionsClient({
           />
 
           <Input
-            label="Transaction Reference / UPI ID (Optional)"
+            label={t.members.transactionRefLabel}
             placeholder="e.g. UPI Ref 3091823901"
             value={payRef}
             onChange={(e) => setPayRef(e.target.value)}
           />
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700">Notes (Optional)</label>
+            <label className="block text-sm font-medium text-slate-700">{t.members.notesOptionalLabel}</label>
             <textarea
               rows={2}
               value={payNotes}
@@ -399,10 +402,10 @@ export function MemberActionsClient({
 
           <div className="flex items-center justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => setIsPaymentOpen(false)}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button type="submit" variant="success" isLoading={isPending}>
-              Save Payment
+              {t.members.savePaymentBtn}
             </Button>
           </div>
         </form>

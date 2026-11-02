@@ -1,6 +1,4 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { getPlanByIdAction } from '@/actions/plans';
 import { EditPlanForm } from '@/components/plans/EditPlanForm';
 
@@ -18,15 +16,7 @@ export default async function EditPlanPage({
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <Link
-        href="/plans"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Plans
-      </Link>
-
+    <div className="max-w-2xl mx-auto">
       <EditPlanForm plan={plan} />
     </div>
   );

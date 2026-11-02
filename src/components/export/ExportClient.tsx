@@ -20,8 +20,10 @@ import { Alert } from '@/components/ui/alert';
 import { Modal } from '@/components/ui/modal';
 import { Download, Upload, Users, CreditCard, IndianRupee, ShieldCheck, Database, CheckCircle2, Layers } from 'lucide-react';
 import { format } from 'date-fns';
+import { useI18n } from '@/lib/i18n/context';
 
 export function ExportClient() {
+  const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
   const [activeExport, setActiveExport] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -140,8 +142,13 @@ export function ExportClient() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t.export.title}</h1>
+        <p className="text-sm text-slate-500">{t.export.subtitle}</p>
+      </div>
+
       {error && (
-        <Alert variant="danger" title="Export Error">
+        <Alert variant="danger" title={t.common.error}>
           {error}
         </Alert>
       )}
@@ -156,10 +163,9 @@ export function ExportClient() {
       <div className="rounded-xl bg-sky-50 border border-sky-100 p-4 text-sm text-sky-800 flex items-start gap-3">
         <ShieldCheck className="h-5 w-5 text-sky-600 shrink-0 mt-0.5" />
         <div>
-          <p className="font-semibold">Sanitized & Excel-Ready Exports</p>
+          <p className="font-semibold">{t.export.csvExportsTitle}</p>
           <p className="text-xs text-sky-700 mt-0.5">
-            All CSV exports are protected against spreadsheet formula injection and formatted with UTF-8
-            BOM so Indian Rupee (₹) symbols open correctly in Microsoft Excel, Google Sheets, and LibreOffice.
+            {t.export.csvExportsDesc}
           </p>
         </div>
       </div>
@@ -171,9 +177,9 @@ export function ExportClient() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-600 mb-2">
               <Users className="h-5 w-5" />
             </div>
-            <CardTitle className="text-base">Members Directory</CardTitle>
+            <CardTitle className="text-base">{t.members.title}</CardTitle>
             <CardDescription>
-              Complete list of all registered and archived members with phone, email, and joined dates.
+              {t.export.exportMembersCsvDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -183,7 +189,7 @@ export function ExportClient() {
               onClick={() => handleExport('members')}
             >
               <Download className="h-4 w-4" />
-              Download Members CSV
+              {t.export.exportMembersCsv}
             </Button>
           </CardContent>
         </Card>
@@ -194,9 +200,9 @@ export function ExportClient() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mb-2">
               <Layers className="h-5 w-5" />
             </div>
-            <CardTitle className="text-base">Membership Plans</CardTitle>
+            <CardTitle className="text-base">{t.plans.title}</CardTitle>
             <CardDescription>
-              Pricing catalog including plan durations, prices (₹), active status, and descriptions.
+              {t.export.exportPlansCsvDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -207,7 +213,7 @@ export function ExportClient() {
               onClick={() => handleExport('plans')}
             >
               <Download className="h-4 w-4" />
-              Download Plans CSV
+              {t.export.exportPlansCsv}
             </Button>
           </CardContent>
         </Card>
@@ -218,9 +224,9 @@ export function ExportClient() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 mb-2">
               <CreditCard className="h-5 w-5" />
             </div>
-            <CardTitle className="text-base">Membership Periods</CardTitle>
+            <CardTitle className="text-base">{t.members.membershipHistoryTitle}</CardTitle>
             <CardDescription>
-              All historical enrollments, renewal terms, snapshots of agreed prices, and expiry dates.
+              {t.export.exportMembershipsCsvDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -231,7 +237,7 @@ export function ExportClient() {
               onClick={() => handleExport('memberships')}
             >
               <Download className="h-4 w-4" />
-              Download Periods CSV
+              {t.export.exportMembershipsCsv}
             </Button>
           </CardContent>
         </Card>
@@ -242,9 +248,9 @@ export function ExportClient() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 mb-2">
               <IndianRupee className="h-5 w-5" />
             </div>
-            <CardTitle className="text-base">Payment Ledger</CardTitle>
+            <CardTitle className="text-base">{t.payments.paymentHistory}</CardTitle>
             <CardDescription>
-              Chronological register of every cash, UPI, and card fee collection with transaction IDs.
+              {t.export.exportPaymentsCsvDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -255,7 +261,7 @@ export function ExportClient() {
               onClick={() => handleExport('payments')}
             >
               <Download className="h-4 w-4" />
-              Download Payments CSV
+              {t.export.exportPaymentsCsv}
             </Button>
           </CardContent>
         </Card>
@@ -266,9 +272,9 @@ export function ExportClient() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 mb-2">
               <Database className="h-5 w-5" />
             </div>
-            <CardTitle className="text-base">Data Backup & Recovery Center</CardTitle>
+            <CardTitle className="text-base">{t.export.fullBackupTitle}</CardTitle>
             <CardDescription>
-              Export a complete snapshot of all gym records or safely restore from a previous JSON backup file.
+              {t.export.fullBackupDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-0">
@@ -279,12 +285,12 @@ export function ExportClient() {
                 onClick={() => handleExport('backup')}
               >
                 <Download className="h-4 w-4" />
-                Download Full Backup JSON
+                {t.export.exportJsonBackup}
               </Button>
 
               <label className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-purple-300 bg-white px-4 text-sm font-medium text-purple-700 shadow-xs hover:bg-purple-50 transition-colors cursor-pointer">
                 <Upload className="h-4 w-4" />
-                <span>Restore Backup File...</span>
+                <span>{t.export.selectBackupFile}</span>
                 <input
                   type="file"
                   accept=".json,application/json"
@@ -296,7 +302,7 @@ export function ExportClient() {
             </div>
 
             <p className="text-xs text-slate-500">
-              Backups contain your gym business profile, membership plans, registered members, past enrollment terms, and payment ledgers. Note: Automated browser restore is enabled for pilot and standalone instances; production cloud databases restore via secure migration snapshots.
+              {t.export.restoreDesc}
             </p>
           </CardContent>
         </Card>
@@ -312,8 +318,8 @@ export function ExportClient() {
             setPreviewData(null);
             setConfirmText('');
           }}
-          title="Inspect & Restore Backup"
-          description="Review the contents of your backup before applying changes."
+          title={t.export.restoreModalTitle}
+          description={t.export.restoreModalDesc}
           maxWidth="lg"
         >
           <div className="space-y-5 py-2">
@@ -330,19 +336,19 @@ export function ExportClient() {
                 </p>
               </div>
               <div>
-                <span className="text-slate-400">Plans Included</span>
+                <span className="text-slate-400">{t.plans.title}</span>
                 <p className="font-bold text-slate-900 mt-0.5">{previewData.plansCount}</p>
               </div>
               <div>
-                <span className="text-slate-400">Total Members</span>
+                <span className="text-slate-400">{t.members.title}</span>
                 <p className="font-bold text-slate-900 mt-0.5">{previewData.membersCount}</p>
               </div>
               <div>
-                <span className="text-slate-400">Membership Terms</span>
+                <span className="text-slate-400">{t.members.membershipHistoryTitle}</span>
                 <p className="font-bold text-slate-900 mt-0.5">{previewData.membershipsCount}</p>
               </div>
               <div>
-                <span className="text-slate-400">Total Collections</span>
+                <span className="text-slate-400">{t.dashboard.monthlyCollections}</span>
                 <p className="font-bold text-emerald-700 mt-0.5">
                   {formatCurrency(previewData.totalAmountCollected)}
                 </p>
@@ -352,7 +358,7 @@ export function ExportClient() {
             {/* Mode selection */}
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
-                Restoration Mode
+                {t.export.restoreModalTitle}
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label
@@ -371,10 +377,10 @@ export function ExportClient() {
                       onChange={() => setRestoreMode('merge')}
                       className="text-sky-600 focus:ring-sky-500"
                     />
-                    <span className="text-sm font-semibold text-slate-900">Merge (Recommended)</span>
+                    <span className="text-sm font-semibold text-slate-900">{t.export.restoreModeMerge}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 pl-5">
-                    Adds non-duplicate records without modifying or deleting existing records.
+                    {t.export.restoreModeMergeDesc}
                   </p>
                 </label>
 
@@ -394,10 +400,10 @@ export function ExportClient() {
                       onChange={() => setRestoreMode('replace')}
                       className="text-rose-600 focus:ring-rose-500"
                     />
-                    <span className="text-sm font-semibold text-rose-900">Replace Exact Snapshot</span>
+                    <span className="text-sm font-semibold text-rose-900">{t.export.restoreModeReplace}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 pl-5">
-                    Replaces current gym records with this backup. Safety rollback copy is saved first.
+                    {t.export.restoreModeReplaceDesc}
                   </p>
                 </label>
               </div>
@@ -406,7 +412,7 @@ export function ExportClient() {
             {/* Explicit confirmation safety check */}
             <div className="space-y-1.5 pt-2 border-t border-slate-100">
               <label htmlFor="confirmText" className="text-xs font-medium text-slate-700 block">
-                Type <span className="font-bold text-slate-900">RESTORE</span> to confirm:
+                {t.export.typeRestoreToConfirm}
               </label>
               <input
                 id="confirmText"
@@ -429,7 +435,7 @@ export function ExportClient() {
                   setConfirmText('');
                 }}
               >
-                Cancel
+                {t.common.cancel}
               </Button>
               <Button
                 type="button"
@@ -438,7 +444,7 @@ export function ExportClient() {
                 isLoading={isPending}
                 onClick={handleConfirmRestore}
               >
-                Apply Restoration
+                {t.export.confirmRestoreBtn}
               </Button>
             </div>
           </div>

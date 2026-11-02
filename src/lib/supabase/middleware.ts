@@ -30,12 +30,14 @@ export async function updateSession(request: NextRequest) {
     if (!hasUser && !isPublicRoute && request.nextUrl.pathname !== '/') {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = '/login';
+      redirectUrl.search = '';
       return NextResponse.redirect(redirectUrl);
     }
 
     if (hasUser && isAuthEntryRoute) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = '/dashboard';
+      redirectUrl.search = '';
       return NextResponse.redirect(redirectUrl);
     }
 
@@ -73,12 +75,14 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublicRoute && request.nextUrl.pathname !== '/') {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/login';
+    redirectUrl.search = '';
     return NextResponse.redirect(redirectUrl);
   }
 
   if (user && isAuthEntryRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/dashboard';
+    redirectUrl.search = '';
     return NextResponse.redirect(redirectUrl);
   }
 

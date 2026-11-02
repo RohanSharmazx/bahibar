@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { LogOut, ShieldAlert, Menu } from 'lucide-react';
+import { LogOut, ShieldAlert, Menu, Loader2 } from 'lucide-react';
 import { BahiBarIcon } from '@/components/ui/logo';
 import { logoutAction } from '@/actions/auth';
 import { resetAnalytics } from '@/lib/analytics';
@@ -21,6 +21,15 @@ interface TopBarProps {
 
 export function TopBar({ gym, subscription, userName, accessibleGyms = [] }: TopBarProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isLoggingOut, startLogoutTransition] = useTransition();
+
+  const handleLogout = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    resetAnalytics();
+    startLogoutTransition(async () => {
+      await logoutAction();
+    });
+  };
 
   const isFreePilot =
     subscription?.status === 'pilot' ||
@@ -129,17 +138,21 @@ export function TopBar({ gym, subscription, userName, accessibleGyms = [] }: Top
               </div>
               <form
                 action={logoutAction}
-                onSubmit={() => {
-                  resetAnalytics();
-                }}
+                method="post"
+                onSubmit={handleLogout}
               >
                 <button
                   type="submit"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                  disabled={isLoggingOut}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer disabled:opacity-50"
                   title="Sign out"
                   aria-label="Sign out"
                 >
-                  <LogOut className="h-4 w-4" />
+                  {isLoggingOut ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                  ) : (
+                    <LogOut className="h-4 w-4" />
+                  )}
                 </button>
               </form>
             </div>

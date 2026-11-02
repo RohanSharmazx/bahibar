@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/utils/dates';
 import { comparePaymentsDesc } from '@/lib/utils/memberships';
 import { ReceiptModal, type ReceiptData } from './ReceiptModal';
 import { Receipt, ArrowUpRight } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/context';
 import type { PaymentWithMember } from '@/types';
 
 interface PaymentsTableClientProps {
@@ -22,6 +23,7 @@ export function PaymentsTableClient({
   gymPhone,
   gymAddress,
 }: PaymentsTableClientProps) {
+  const { t } = useI18n();
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptData | null>(null);
 
   // Deduplicate and deterministically sort payments latest-first
@@ -32,7 +34,7 @@ export function PaymentsTableClient({
   if (sortedPayments.length === 0) {
     return (
       <div className="py-12 text-center text-sm text-slate-500">
-        No payment transactions recorded yet.
+        {t.payments.noTransactionsRecorded}
       </div>
     );
   }
@@ -44,13 +46,13 @@ export function PaymentsTableClient({
         <table className="w-full text-left text-sm text-slate-600">
           <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
             <tr>
-              <th className="px-6 py-3.5">Date</th>
-              <th className="px-6 py-3.5">Member</th>
-              <th className="px-6 py-3.5">Plan</th>
-              <th className="px-6 py-3.5">Method</th>
-              <th className="px-6 py-3.5">Reference</th>
-              <th className="px-6 py-3.5 text-right">Amount (₹)</th>
-              <th className="px-6 py-3.5 text-center">Receipt</th>
+              <th className="px-6 py-3.5">{t.payments.colDate}</th>
+              <th className="px-6 py-3.5">{t.payments.colMember}</th>
+              <th className="px-6 py-3.5">{t.payments.colPlan}</th>
+              <th className="px-6 py-3.5">{t.payments.colMethod}</th>
+              <th className="px-6 py-3.5">{t.payments.colReference}</th>
+              <th className="px-6 py-3.5 text-right">{t.payments.colAmount}</th>
+              <th className="px-6 py-3.5 text-center">{t.payments.colReceipt}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -105,10 +107,10 @@ export function PaymentsTableClient({
                       })
                     }
                     className="inline-flex items-center gap-1 text-xs font-medium text-sky-700 hover:text-sky-800 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
-                    title="View & Download Receipt"
+                    title={t.payments.viewReceipt}
                   >
                     <Receipt className="h-3.5 w-3.5" />
-                    Receipt
+                    {t.payments.colReceipt}
                   </button>
                 </td>
               </tr>
@@ -178,7 +180,7 @@ export function PaymentsTableClient({
                 className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer min-h-[44px] min-w-[84px] tap-feedback"
               >
                 <Receipt className="h-4 w-4" />
-                Receipt
+                {t.payments.colReceipt}
               </button>
             </div>
           </div>

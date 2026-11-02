@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bahibar",
+  "main": ".open-next/worker.js",
+  "upload_source_maps": true,
+  "compatibility_date": "2026-10-30",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "SITE_URL": "https://bahibar-staging.bahibar.workers.dev",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://xclffxcoqjonasvqywxj.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjbGZmeGNvcWpvbmFzdnF5d3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NDc3OTEsImV4cCI6MjEwODMyMzc5MX0.LAPghzeM-PKq6CNRDFmAUXjkMs6hpo78U0ZcgZyhqms",
+    "NEXT_PUBLIC_SITE_URL": "https://bahibar-staging.bahibar.workers.dev",
+    "NEXT_PUBLIC_ENABLE_ANALYTICS": "false"
+  },
+  "env": {
+    "staging": {
+      "name": "bahibar-staging",
+      "vars": {
+        "SITE_URL": "https://bahibar-staging.bahibar.workers.dev",
+        "NEXT_PUBLIC_SUPABASE_URL": "https://xclffxcoqjonasvqywxj.supabase.co",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjbGZmeGNvcWpvbmFzdnF5d3hqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NDc3OTEsImV4cCI6MjEwODMyMzc5MX0.LAPghzeM-PKq6CNRDFmAUXjkMs6hpo78U0ZcgZyhqms",
+        "NEXT_PUBLIC_SITE_URL": "https://bahibar-staging.bahibar.workers.dev",
+        "NEXT_PUBLIC_ENABLE_ANALYTICS": "false"
+      }
+    }
+  }
+}

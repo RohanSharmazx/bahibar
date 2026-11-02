@@ -5,6 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:worker": "opennextjs-cloudflare build",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && NODE_OPTIONS=\"--dns-result-order=ipv4first\" opennextjs-cloudflare deploy",
+    "deploy:staging": "opennextjs-cloudflare build && NODE_OPTIONS=\"--dns-result-order=ipv4first\" opennextjs-cloudflare deploy --env staging",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run"
@@ -25,6 +30,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.14",
     "@tailwindcss/turbopack": "^4",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
@@ -38,6 +44,7 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "wrangler": "^4.156.0"
   }
 }
