@@ -82,17 +82,6 @@ export function TopBar({ gym, subscription, userName, accessibleGyms = [] }: Top
 
           {/* Right: Status + Actions */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {isFreePilot && (
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200"
-                title="Active Free Pilot Partner Workspace"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span className="hidden sm:inline">Free Pilot</span>
-                <span>Partner</span>
-              </span>
-            )}
-
             {isTrial && (
               <Link
                 href="/settings"

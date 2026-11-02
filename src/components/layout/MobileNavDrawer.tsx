@@ -149,17 +149,6 @@ export function MobileNavDrawer({
             </button>
           </div>
 
-          {/* Software Subscription Indicator */}
-          {isFreePilot && (
-            <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-900">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span>Free Pilot Partner • Full Access</span>
-              </div>
-              <span className="text-[10px] uppercase font-bold text-emerald-700">Pilot</span>
-            </div>
-          )}
-
           {isTrial && (
             <Link
               href="/settings"
