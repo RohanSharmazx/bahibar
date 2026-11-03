@@ -81,6 +81,12 @@ button, a, input, select, textarea {
   animation: stage-fade-in 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Off-screen rendering optimization: skips painting/layout until near viewport */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
+}
+
 /* Accessibility: respect user preferences for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {

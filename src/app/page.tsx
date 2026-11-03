@@ -48,7 +48,7 @@ export default async function HomePage({
       {isDeleted && <DeletionNoticeBanner />}
       <LandingHeader userLoggedIn={!!user} />
       <main className="flex-1">
-        {/* Section 1: Hero & Product Preview */}
+        {/* Section 1: Hero & Product Preview (Immediate above-the-fold render) */}
         <HeroSection />
 
         {/* Section 2: The Paper-Register Problem */}
@@ -58,19 +58,29 @@ export default async function HomePage({
         <ProductStorySection />
 
         {/* Section 4: Daily Routine & Administrative Time Calculator */}
-        <SavingsEstimator />
+        <div className="content-auto">
+          <SavingsEstimator />
+        </div>
 
         {/* Section 5: Core Benefits */}
-        <BenefitsSection />
+        <div className="content-auto">
+          <BenefitsSection />
+        </div>
 
         {/* Section 6: Data Safety, Privacy & Architecture */}
-        <PrivacyTrustSection />
+        <div className="content-auto">
+          <PrivacyTrustSection />
+        </div>
 
         {/* Section 7: Clear FAQs */}
-        <FaqSection />
+        <div className="content-auto">
+          <FaqSection />
+        </div>
 
         {/* Section 8: Final Call to Action */}
-        <FinalCtaSection />
+        <div className="content-auto">
+          <FinalCtaSection />
+        </div>
       </main>
       <LandingFooter />
     </div>

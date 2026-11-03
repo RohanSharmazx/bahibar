@@ -1,16 +1,26 @@
 import { CURRENCY } from '@/lib/constants';
 
+// Pre-instantiated formatters avoid expensive Intl.NumberFormat reconstruction on every render
+const standardCurrencyFormatter = new Intl.NumberFormat(CURRENCY.locale, {
+  style: 'currency',
+  currency: CURRENCY.code,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const compactCurrencyFormatterWhole = new Intl.NumberFormat(CURRENCY.locale, {
+  style: 'currency',
+  currency: CURRENCY.code,
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
 /**
  * Format a number as Indian Rupees (₹)
  * Example: 2000 → "₹2,000.00"
  */
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat(CURRENCY.locale, {
-    style: 'currency',
-    currency: CURRENCY.code,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return standardCurrencyFormatter.format(amount);
 }
 
 /**
@@ -19,12 +29,7 @@ export function formatCurrency(amount: number): string {
  */
 export function formatCurrencyCompact(amount: number): string {
   const hasDecimals = amount % 1 !== 0;
-  return new Intl.NumberFormat(CURRENCY.locale, {
-    style: 'currency',
-    currency: CURRENCY.code,
-    minimumFractionDigits: hasDecimals ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return (hasDecimals ? standardCurrencyFormatter : compactCurrencyFormatterWhole).format(amount);
 }
 
 /**

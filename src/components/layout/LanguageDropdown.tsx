@@ -55,11 +55,14 @@ export function LanguageDropdown({
     [isOpen]
   );
 
-  const handleSelect = (newLocale: Locale) => {
-    setLocale(newLocale);
-    setIsOpen(false);
-    buttonRef.current?.focus();
-  };
+  const handleSelect = useCallback(
+    (newLocale: Locale) => {
+      setLocale(newLocale);
+      setIsOpen(false);
+      buttonRef.current?.focus();
+    },
+    [setLocale]
+  );
 
   const isHindi = locale === 'hi';
 
@@ -69,7 +72,7 @@ export function LanguageDropdown({
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#087FDB]/20 focus:border-[#087FDB] transition-all cursor-pointer min-h-[40px] tap-feedback ${
+        className={`flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#087FDB]/20 focus:border-[#087FDB] transition-all cursor-pointer min-h-[44px] tap-feedback ${
           isOpen ? 'ring-2 ring-[#087FDB]/20 border-[#087FDB]' : ''
         }`}
         aria-haspopup="listbox"

@@ -87,8 +87,14 @@ export function I18nProvider({
   const dictionary = useMemo(() => dictionaries[locale] || enDictionary, [locale]);
 
   // Dual-style lookup: supports both t("common.save") and t.common.save
+  // Fast in-memory map caches path lookups so repeated renders avoid split and tree traversal
   const t = useMemo(() => {
+    const lookupCache = new Map<string, string>();
+
     const fn = (path: string): string => {
+      const cached = lookupCache.get(path);
+      if (cached !== undefined) return cached;
+
       const parts = path.split('.');
       let current: any = dictionary;
 
@@ -102,28 +108,41 @@ export function I18nProvider({
             if (fallback && typeof fallback === 'object' && fPart in fallback) {
               fallback = fallback[fPart];
             } else {
+              lookupCache.set(path, path);
               return path;
             }
           }
-          return typeof fallback === 'string' ? fallback : path;
+          const res = typeof fallback === 'string' ? fallback : path;
+          lookupCache.set(path, res);
+          return res;
         }
       }
 
-      return typeof current === 'string' ? current : path;
+      const res = typeof current === 'string' ? current : path;
+      lookupCache.set(path, res);
+      return res;
     };
 
     return Object.assign(fn, dictionary) as TFunction;
   }, [dictionary]);
 
+  // Re-use single Intl.NumberFormat instance per locale to eliminate constructor overhead
+  const numberFormatter = useMemo(() => {
+    try {
+      return new Intl.NumberFormat(locale === 'hi' ? 'hi-IN' : 'en-IN');
+    } catch {
+      return null;
+    }
+  }, [locale]);
+
   const formatNumber = useCallback(
     (value: number): string => {
-      try {
-        return new Intl.NumberFormat(locale === 'hi' ? 'hi-IN' : 'en-IN').format(value);
-      } catch {
-        return String(value);
+      if (numberFormatter) {
+        return numberFormatter.format(value);
       }
+      return String(value);
     },
-    [locale]
+    [numberFormatter]
   );
 
   const contextValue = useMemo(
