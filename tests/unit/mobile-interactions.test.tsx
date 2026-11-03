@@ -85,10 +85,9 @@ describe('HeroSection Mobile Touch & Actions', () => {
 
     const links = Array.from(doc.querySelectorAll('a'));
 
-    // Primary CTA: Start Your Free Trial -> /register
-    const trialCta = links.find((a) => a.textContent?.includes('Start Your Free Trial'));
+    // Primary CTA: Register link -> /register
+    const trialCta = links.find((a) => a.getAttribute('href') === '/register');
     expect(trialCta).toBeDefined();
-    expect(trialCta?.getAttribute('href')).toBe('/register');
     expect(trialCta?.className).toContain('min-h-[48px]');
 
     // Secondary CTA: See How It Works -> #story

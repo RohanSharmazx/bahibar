@@ -19,7 +19,7 @@ export function FinalCtaSection() {
         {/* Pill */}
         <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-[#12BBDD] border border-white/10 backdrop-blur-xs">
           <span className="flex h-2 w-2 rounded-full bg-[#12BBDD] animate-pulse" />
-          <span>{isHi ? '30-दिन का अप्रतिबंधित निःशुल्क ट्रायल' : '30-Day Unrestricted Free Trial'}</span>
+          <span>{isHi ? 'प्रारंभिक पार्टनर जिमों के लिए 100% निःशुल्क' : '100% Free For Early Partner Gyms'}</span>
         </div>
 
         {/* Headline & Body */}

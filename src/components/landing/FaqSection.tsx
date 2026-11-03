@@ -11,9 +11,9 @@ interface FaqItem {
 
 const FAQS_EN: FaqItem[] = [
   {
-    question: 'How does the 30-day free trial work?',
+    question: 'How does early access work for gyms?',
     answer:
-      'When you create an account, BahiBar automatically initializes a 30-day unrestricted free trial for your gym. You get immediate access to all features — member registration, plans, payment tracking, receipts, and data exports. No credit card is required to get started.',
+      'BahiBar is currently 100% free for independent gyms during our early adoption phase. You get immediate, unrestricted access to all features — member registration, plans, payment tracking, receipts, and data exports. No credit card is required to get started.',
   },
   {
     question: 'Can I use BahiBar from my phone at the gym reception desk?',
@@ -31,9 +31,9 @@ const FAQS_EN: FaqItem[] = [
       'BahiBar uses automated calendar-month arithmetic with leap-year and month-end clamping (for example, Jan 31 + 1 month = Feb 28 or Feb 29 in leap years). Renewing an active membership automatically extends from the day after the current expiry date for uninterrupted continuity.',
   },
   {
-    question: 'What happens to my gym records if my trial or subscription expires?',
+    question: 'What happens to my gym records if pricing is introduced in the future?',
     answer:
-      'We follow a strict No Hostage Data policy. If your trial ends, your member database and transaction audit trail remain 100% intact. You can view and export your entire dataset to Excel CSV or JSON at any time without fees.',
+      'We follow a strict No Hostage Data policy. When transparent pricing is introduced once we reach a sustainable user base, existing partner gyms will receive clear advance notice. Regardless of any future plans, your member database and transaction history remain 100% your property, and you can view and export your entire dataset to Excel CSV or JSON at any time without fees.',
   },
   {
     question: 'Can I export full backups of my data?',
@@ -49,9 +49,9 @@ const FAQS_EN: FaqItem[] = [
 
 const FAQS_HI: FaqItem[] = [
   {
-    question: '30-दिन का निःशुल्क ट्रायल कैसे काम करता है?',
+    question: 'जिमों के लिए अर्ली एक्सेस कैसे काम करता है?',
     answer:
-      'जब आप खाता बनाते हैं, तो बहीबार आपके जिम के लिए 30-दिन का अप्रतिबंधित निःशुल्क ट्रायल शुरू करता है। आपको सभी सुविधाओं का तत्काल एक्सेस मिलता है — सदस्य पंजीकरण, प्लान्स, फीस ट्रैकिंग, रसीदें और डेटा निर्यात। शुरू करने के लिए किसी क्रेडिट कार्ड की आवश्यकता नहीं है।',
+      'बहीबार वर्तमान में हमारे प्रारंभिक विकास चरण के दौरान स्वतंत्र जिमों के लिए 100% निःशुल्क है। आपको सभी सुविधाओं का तत्काल, अप्रतिबंधित एक्सेस मिलता है — सदस्य पंजीकरण, प्लान्स, फीस ट्रैकिंग, रसीदें और डेटा निर्यात। शुरू करने के लिए किसी क्रेडिट कार्ड की आवश्यकता नहीं है।',
   },
   {
     question: 'क्या मैं जिम रिसेप्शन डेस्क पर अपने फोन से बहीबार का उपयोग कर सकता हूं?',
@@ -69,9 +69,9 @@ const FAQS_HI: FaqItem[] = [
       'बहीबार लीप-वर्ष और माह-अंत समायोजन के साथ स्वचालित कैलेंडर-माह अंकगणित का उपयोग करता है (उदा. 31 जनवरी + 1 माह = 28 या 29 फरवरी)। सक्रिय सदस्यता का नवीनीकरण समाप्ति के अगले दिन से अपने आप जुड़ जाता है।',
   },
   {
-    question: 'यदि मेरा ट्रायल या सब्सक्रिप्शन समाप्त हो जाता है तो मेरे जिम रिकॉर्ड का क्या होगा?',
+    question: 'यदि भविष्य में शुल्क (Pricing) शुरू होता है तो मेरे जिम रिकॉर्ड का क्या होगा?',
     answer:
-      'हम सख्त "नो होस्टेज डेटा" नीति का पालन करते हैं। यदि आपका ट्रायल समाप्त भी हो जाता है, तो आपका सदस्य डेटाबेस और लेन-देन का रिकॉर्ड 100% सुरक्षित रहता है। आप बिना किसी शुल्क के कभी भी एक्सेल CSV या JSON में अपना पूरा डेटा डाउनलोड कर सकते हैं।',
+      'हम सख्त "नो होस्टेज डेटा" नीति का पालन करते हैं। भविष्य में जब मूल्य निर्धारण पेश किया जाएगा, तो प्रारंभिक पार्टनर जिमों को पहले से स्पष्ट सूचना दी जाएगी। किसी भी स्थिति में, आपका सदस्य डेटाबेस और लेन-देन का रिकॉर्ड 100% आपकी संपत्ति रहेगा, और आप बिना किसी शुल्क के कभी भी एक्सेल CSV या JSON में अपना पूरा डेटा निर्यात कर सकते हैं।',
   },
   {
     question: 'क्या मैं अपने डेटा का पूरा बैकअप निर्यात कर सकता हूं?',

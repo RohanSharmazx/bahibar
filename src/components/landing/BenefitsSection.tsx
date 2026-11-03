@@ -209,12 +209,12 @@ export function BenefitsSection() {
         <div className="mt-12 rounded-2xl border border-sky-100 bg-sky-50/60 p-5 sm:p-6 text-center max-w-3xl mx-auto space-y-2">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#087FDB] uppercase tracking-wider">
             <ShieldCheck className="h-4 w-4" />
-            Transparent Product Roadmap
+            {locale === 'hi' ? 'पारदर्शी उत्पाद रोडमैप' : 'Transparent Product Roadmap'}
           </div>
           <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-            All 4 core capabilities above reflect live, functional workflows in the application. Additional
-            capabilities (such as biometric turnstiles and automated SMS gateways) remain on the design
-            roadmap and are not advertised as available.
+            {locale === 'hi'
+              ? 'ऊपर दी गई सभी 4 मुख्य सुविधाएं ऐप में पूरी तरह से सक्रिय और चालू हैं। अतिरिक्त सुविधाएं (जैसे बायोमेट्रिक टर्नस्टाइल और स्वचालित एसएमएस गेटवे) भविष्य के रोडमैप पर हैं और अभी शामिल नहीं हैं।'
+              : 'All 4 core capabilities above reflect live, functional workflows in the application. Additional capabilities (such as biometric turnstiles and automated SMS gateways) remain on the design roadmap and are not advertised as available.'}
           </p>
         </div>
       </div>

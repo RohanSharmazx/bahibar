@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n/context';
 import { trackSignupCtaClicked } from '@/lib/analytics';
 
 export function HeroSection() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50/50 pt-10 pb-16 lg:pt-16 lg:pb-24 border-b border-slate-200/70">
@@ -53,6 +53,13 @@ export function HeroSection() {
               </a>
             </div>
 
+            {/* Early partner access reassurance */}
+            <p className="text-xs text-slate-500 pt-1 text-center lg:text-left">
+              {locale === 'hi'
+                ? 'प्रारंभिक पार्टनर जिमों के लिए 100% निःशुल्क • कोई क्रेडिट कार्ड आवश्यक नहीं • कभी भी डेटा निर्यात करें'
+                : '100% free for gyms during early access • No credit card required • Export data anytime'}
+            </p>
+
             {/* Existing gym sign in prompt */}
             <div className="pt-1 text-center lg:text-left">
               <span className="text-xs text-slate-500">
@@ -70,15 +77,15 @@ export function HeroSection() {
             <div className="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-y-2 gap-x-6 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                No physical notebook wear-and-tear
+                {locale === 'hi' ? 'रजिस्टर के फटने या खोने का कोई डर नहीं' : 'No physical notebook wear-and-tear'}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                Standard calendar-month expiry
+                {locale === 'hi' ? 'सटीक कैलेंडर-माह समाप्ति तिथि' : 'Standard calendar-month expiry'}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                Indian Rupee & UPI friendly
+                {locale === 'hi' ? 'भारतीय रुपया और यूपीआई अनुकूल' : 'Indian Rupee & UPI friendly'}
               </span>
             </div>
           </div>
@@ -102,26 +109,34 @@ export function HeroSection() {
                     </span>
                   </div>
                   <span className="rounded-md bg-sky-100/80 px-2 py-0.5 text-[10px] font-bold text-sky-800 uppercase tracking-wider">
-                    Product Preview
+                    {locale === 'hi' ? 'डेस्क पूर्वावलोकन' : 'Product Preview'}
                   </span>
                 </div>
 
                 {/* Mockup Quick Stats Header */}
-                <div className="grid grid-cols-4 gap-2 p-3 bg-slate-50/60 border-b border-slate-100 text-center text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 bg-slate-50/60 border-b border-slate-100 text-center text-xs">
                   <div className="bg-white p-2 rounded-lg border border-slate-100 shadow-2xs">
-                    <span className="text-[10px] text-slate-500 block font-medium">Active Members</span>
+                    <span className="text-[10px] text-slate-500 block font-medium">
+                      {locale === 'hi' ? 'सक्रिय सदस्य' : 'Active Members'}
+                    </span>
                     <span className="text-base font-extrabold text-[#101F33]">142</span>
                   </div>
                   <div className="bg-white p-2 rounded-lg border border-slate-100 shadow-2xs">
-                    <span className="text-[10px] text-emerald-600 block font-medium">Collections</span>
+                    <span className="text-[10px] text-emerald-600 block font-medium">
+                      {locale === 'hi' ? 'कुल वसूली' : 'Collections'}
+                    </span>
                     <span className="text-base font-extrabold text-emerald-700">₹1.84L</span>
                   </div>
                   <div className="bg-white p-2 rounded-lg border border-slate-100 shadow-2xs">
-                    <span className="text-[10px] text-amber-600 block font-medium">Expiring Soon</span>
+                    <span className="text-[10px] text-amber-600 block font-medium">
+                      {locale === 'hi' ? 'जल्द समाप्त' : 'Expiring Soon'}
+                    </span>
                     <span className="text-base font-extrabold text-amber-700">6</span>
                   </div>
                   <div className="bg-white p-2 rounded-lg border border-slate-100 shadow-2xs">
-                    <span className="text-[10px] text-rose-600 block font-medium">Pending Dues</span>
+                    <span className="text-[10px] text-rose-600 block font-medium">
+                      {locale === 'hi' ? 'बकाया फीस' : 'Pending Dues'}
+                    </span>
                     <span className="text-base font-extrabold text-rose-700">₹18,500</span>
                   </div>
                 </div>

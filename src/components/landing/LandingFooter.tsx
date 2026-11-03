@@ -20,22 +20,22 @@ export function LandingFooter() {
           {/* Quick links */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-semibold text-slate-300">
             <a href="#story" className="hover:text-[#12BBDD] transition-colors py-2 min-h-[44px] inline-flex items-center">
-              {t.landing.navHowItWorks}
+              {t('landing.navHowItWorks')}
             </a>
             <a href="#benefits" className="hover:text-[#12BBDD] transition-colors py-2 min-h-[44px] inline-flex items-center">
-              {t.landing.navFeatures}
+              {t('landing.navFeatures')}
             </a>
             <a href="#security" className="hover:text-[#12BBDD] transition-colors py-2 min-h-[44px] inline-flex items-center">
-              {t.landing.navDataPrivacy}
+              {t('landing.navDataPrivacy')}
             </a>
             <a href="#faq" className="hover:text-[#12BBDD] transition-colors py-2 min-h-[44px] inline-flex items-center">
-              {t.landing.navFaq}
+              {t('landing.navFaq')}
             </a>
             <Link href="/login" className="hover:text-[#12BBDD] transition-colors py-2 min-h-[44px] inline-flex items-center">
-              {t.common.signIn}
+              {t('common.signIn')}
             </Link>
             <Link href="/register" className="text-[#12BBDD] hover:underline font-bold py-2 min-h-[44px] inline-flex items-center">
-              {isHi ? 'मुफ्त ट्रायल शुरू करें →' : 'Start Free Trial →'}
+              {isHi ? 'फ्री एक्सेस प्राप्त करें →' : 'Get Free Access →'}
             </Link>
           </div>
         </div>

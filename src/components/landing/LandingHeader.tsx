@@ -83,7 +83,7 @@ export function LandingHeader({ userLoggedIn }: LandingHeaderProps) {
           {userLoggedIn ? (
             <Link
               href="/dashboard"
-              className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-[#087FDB] px-3 text-xs font-bold uppercase tracking-wider text-white shadow-xs hover:bg-[#0669b6] active:bg-[#055393] transition-colors"
+              className="inline-flex min-h-[44px] items-center justify-center gap-1 rounded-lg bg-[#087FDB] px-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-xs hover:bg-[#0669b6] active:bg-[#055393] transition-colors"
             >
               {t('common.dashboard')}
               <ArrowRight className="h-3 w-3" />
@@ -91,7 +91,7 @@ export function LandingHeader({ userLoggedIn }: LandingHeaderProps) {
           ) : (
             <Link
               href="/login"
-              className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
             >
               {t('common.signIn')}
             </Link>

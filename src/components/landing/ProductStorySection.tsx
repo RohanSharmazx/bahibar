@@ -134,15 +134,27 @@ export function ProductStorySection() {
   };
 
   const handleCopySlip = () => {
-    const slipText = `*Fee Payment Voucher - Olympic Fitness Club*\n` +
-      `Receipt No: REC-DEMO-8812\n` +
-      `Member: ${memberName}\n` +
-      `Plan: ${currentPlan.name}\n` +
-      `Amount Paid: ${formatCurrency(amountPaid)}\n` +
-      `Payment Mode: ${paymentMethod.toUpperCase()}\n` +
-      `Balance Due: ${formatCurrency(outstandingBalance)}\n` +
-      `Valid Until: ${calculatedExpiryDate}\n\n` +
-      `Thank you for working out with us!`;
+    const slipText = isHi
+      ? `*आधिकारिक रसीद वाउचर - Olympic Fitness Club*\n` +
+        `रसीद सं: REC-DEMO-8812\n` +
+        `सदस्य आईडी: MEM-8812\n` +
+        `सदस्य: ${memberName}\n` +
+        `प्लान का नाम: ${currentPlan.name}\n` +
+        `प्राप्त राशि: ${formatCurrency(amountPaid)}\n` +
+        `भुगतान का माध्यम: ${paymentMethod.toUpperCase()}\n` +
+        `बकाया राशि: ${formatCurrency(outstandingBalance)}\n` +
+        `वैधता: ${calculatedExpiryDate}\n\n` +
+        `हमारे साथ वर्कआउट करने के लिए धन्यवाद!`
+      : `*Official Receipt Voucher - Olympic Fitness Club*\n` +
+        `Receipt No: REC-DEMO-8812\n` +
+        `Member ID: MEM-8812\n` +
+        `Member: ${memberName}\n` +
+        `Plan Name: ${currentPlan.name}\n` +
+        `Amount Received: ${formatCurrency(amountPaid)}\n` +
+        `Payment Mode: ${paymentMethod.toUpperCase()}\n` +
+        `Balance Due: ${formatCurrency(outstandingBalance)}\n` +
+        `Valid Until: ${calculatedExpiryDate}\n\n` +
+        `Thank you for working out with us!`;
 
     navigator.clipboard?.writeText(slipText).then(() => {
       setCopiedSlip(true);
@@ -238,28 +250,28 @@ export function ProductStorySection() {
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 text-xs font-bold text-[#087FDB] uppercase tracking-wider">
                   <UserPlus className="h-4 w-4" />
-                  Step 1 of 4 — Member Registration
+                  {isHi ? 'चरण 1 / 4 — सदस्य पंजीकरण' : 'Step 1 of 4 — Member Registration'}
                 </div>
                 <h3 className="text-2xl font-bold tracking-tight text-[#101F33]">
-                  Enroll a member with automatic expiry dates.
+                  {isHi ? 'स्वचालित समाप्ति तिथि के साथ सदस्य नामांकन।' : 'Enroll a member with automatic expiry dates.'}
                 </h3>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Enter the member’s name, contact number, and select their membership duration.
-                  BahiBar applies standard calendar-month arithmetic with leap-year clamping so the
-                  expiry date is accurate right down to the day.
+                  {isHi
+                    ? 'सदस्य का नाम, संपर्क नंबर दर्ज करें और सदस्यता अवधि चुनें। BahiBar लीप-वर्ष और सटीक कैलेंडर माह के अनुसार समाप्ति तिथि की स्वतः गणना करता है।'
+                    : 'Enter the member’s name, contact number, and select their membership duration. BahiBar applies standard calendar-month arithmetic with leap-year clamping so the expiry date is accurate right down to the day.'}
                 </p>
                 <div className="space-y-2.5 pt-2">
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Instant calendar anniversary computation (e.g. 18 Oct + 3 Mo = 18 Jan)</span>
+                    <span>{isHi ? 'तत्काल कैलेंडर वर्षगांठ गणना (उदा. 18 अक्टूबर + 3 माह = 18 जनवरी)' : 'Instant calendar anniversary computation (e.g. 18 Oct + 3 Mo = 18 Jan)'}</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Snapshot pricing protects historical fees when plan rates change</span>
+                    <span>{isHi ? 'स्नैपशॉट मूल्य निर्धारण: भविष्य में प्लान दरें बदलने पर भी पुराने शुल्क सुरक्षित रहते हैं' : 'Snapshot pricing protects historical fees when plan rates change'}</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Single-entry enrollment automatically populates dues and collections</span>
+                    <span>{isHi ? 'एकल-प्रविष्टि नामांकन से बकाया और वसूली लेज़र स्वतः अपडेट हो जाता है' : 'Single-entry enrollment automatically populates dues and collections'}</span>
                   </div>
                 </div>
 
@@ -280,28 +292,28 @@ export function ProductStorySection() {
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 text-xs font-bold text-[#087FDB] uppercase tracking-wider">
                   <CreditCard className="h-4 w-4" />
-                  Step 2 of 4 — Fee Payment & Dues
+                  {isHi ? 'चरण 2 / 4 — फीस भुगतान और बकाया' : 'Step 2 of 4 — Fee Payment & Dues'}
                 </div>
                 <h3 className="text-2xl font-bold tracking-tight text-[#101F33]">
-                  Record full or partial payments without gaps.
+                  {isHi ? 'बिना किसी अंतर के पूर्ण या आंशिक भुगतान दर्ज करें।' : 'Record full or partial payments without gaps.'}
                 </h3>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Gym members rarely pay on a rigid schedule. Whether they pay upfront via UPI, leave a
-                  cash advance, or take an installment, BahiBar keeps the ledger balanced with zero
-                  scribbles in notebook margins.
+                  {isHi
+                    ? 'जिम सदस्य शायद ही कभी एक तय समय पर भुगतान करते हैं। चाहे वे UPI से तुरंत भुगतान करें, नकद एडवांस दें या किस्तों में दें, BahiBar रजिस्टर में बिना किसी काट-छांट के लेज़र को संतुलित रखता है।'
+                    : 'Gym members rarely pay on a rigid schedule. Whether they pay upfront via UPI, leave a cash advance, or take an installment, BahiBar keeps the ledger balanced with zero scribbles in notebook margins.'}
                 </p>
                 <div className="space-y-2.5 pt-2">
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Support for Cash, UPI, and Card transactions with reference tags</span>
+                    <span>{isHi ? 'रेफरेंस टैग के साथ नकद, UPI और कार्ड लेन-देन का समर्थन' : 'Support for Cash, UPI, and Card transactions with reference tags'}</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Instant mathematical balance due calculation: Agreed Fee − Paid = Pending</span>
+                    <span>{isHi ? 'तत्काल गणितीय शेष बकाया गणना: तय शुल्क − प्राप्त = बकाया' : 'Instant mathematical balance due calculation: Agreed Fee − Paid = Pending'}</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Immutable payment logs create an audit trail you can trust</span>
+                    <span>{isHi ? 'अपरिवर्तनीय भुगतान लॉग एक विश्वसनीय ऑडिट ट्रेल बनाते हैं' : 'Immutable payment logs create an audit trail you can trust'}</span>
                   </div>
                 </div>
 
@@ -329,27 +341,28 @@ export function ProductStorySection() {
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 text-xs font-bold text-[#087FDB] uppercase tracking-wider">
                   <Calendar className="h-4 w-4" />
-                  Step 3 of 4 — Membership Ledger
+                  {isHi ? 'चरण 3 / 4 — सदस्यता लेज़र' : 'Step 3 of 4 — Membership Ledger'}
                 </div>
                 <h3 className="text-2xl font-bold tracking-tight text-[#101F33]">
-                  Spot upcoming renewals and dues at a glance.
+                  {isHi ? 'आगामी नवीनीकरण और बकाया राशि एक नज़र में देखें।' : 'Spot upcoming renewals and dues at a glance.'}
                 </h3>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  No more scanning registers line-by-line. BahiBar immediately surfaces members who are
-                  due for renewal in the next 7 days or who carry an unpaid balance.
+                  {isHi
+                    ? 'रजिस्टर के पन्नों को बार-बार पलटने की जरूरत नहीं। BahiBar उन सदस्यों को तुरंत दिखाता है जिनका नवीनीकरण अगले 7 दिनों में होना है या जिनकी फीस बकाया है।'
+                    : 'No more scanning registers line-by-line. BahiBar immediately surfaces members who are due for renewal in the next 7 days or who carry an unpaid balance.'}
                 </p>
                 <div className="space-y-2.5 pt-2">
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>One-tap filters: Expiring Soon, Pending Dues, Active</span>
+                    <span>{isHi ? 'एक टैप फ़िल्टर: जल्द समाप्त, बकाया फीस, सक्रिय' : 'One-tap filters: Expiring Soon, Pending Dues, Active'}</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Calculates exact days left until expiration automatically</span>
+                    <span>{isHi ? 'समाप्ति तक बचे सटीक दिनों की स्वतः गणना' : 'Calculates exact days left until expiration automatically'}</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Seamless 1-click renewal continuation from the day after expiry</span>
+                    <span>{isHi ? 'समाप्ति के अगले दिन से निर्बाध 1-क्लिक नवीनीकरण जारी' : 'Seamless 1-click renewal continuation from the day after expiry'}</span>
                   </div>
                 </div>
 
@@ -377,27 +390,28 @@ export function ProductStorySection() {
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 text-xs font-bold text-[#087FDB] uppercase tracking-wider">
                   <FileCheck2 className="h-4 w-4" />
-                  Step 4 of 4 — Fee Receipt Voucher
+                  {isHi ? 'चरण 4 / 4 — फीस रसीद वाउचर' : 'Step 4 of 4 — Fee Receipt Voucher'}
                 </div>
                 <h3 className="text-2xl font-bold tracking-tight text-[#101F33]">
-                  Produce a professional receipt in 1 tap.
+                  {isHi ? '1 टैप में पेशेवर रसीद तैयार करें।' : 'Produce a professional receipt in 1 tap.'}
                 </h3>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Provide instant proof of payment without handwritten duplicate slips. Download a crisp,
-                  standalone PDF receipt, print a counter voucher, or copy a WhatsApp summary directly.
+                  {isHi
+                    ? 'हाथ से डुप्लीकेट पर्ची लिखे बिना तुरंत भुगतान का प्रमाण दें। एक स्पष्ट, स्टैंडअलोन PDF रसीद डाउनलोड करें, काउंटर वाउचर प्रिंट करें या सीधे व्हाट्सएप सारांश कॉपी करें।'
+                    : 'Provide instant proof of payment without handwritten duplicate slips. Download a crisp, standalone PDF receipt, print a counter voucher, or copy a WhatsApp summary directly.'}
                 </p>
                 <div className="space-y-2.5 pt-2">
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Pure client-side zero-dependency PDF generator: works on mobile & desktop</span>
+                    <span>{isHi ? 'प्योर क्लाइंट-साइड ज़ीरो-डिपेंडेंसी PDF जनरेटर: मोबाइल और डेस्कटॉप दोनों पर काम करता है' : 'Pure client-side zero-dependency PDF generator: works on mobile & desktop'}</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Standardized voucher with gym letterhead, receipt number, and dues</span>
+                    <span>{isHi ? 'जिम लेटरहेड, रसीद नंबर और बकाया राशि के साथ मानकीकृत वाउचर' : 'Standardized voucher with gym letterhead, receipt number, and dues'}</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs text-slate-700">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Pre-formatted WhatsApp message ready to share with the trainee</span>
+                    <span>{isHi ? 'प्रशिक्षु के साथ साझा करने के लिए तैयार प्री-फॉर्मेटेड व्हाट्सएप संदेश' : 'Pre-formatted WhatsApp message ready to share with the trainee'}</span>
                   </div>
                 </div>
 
@@ -436,7 +450,7 @@ export function ProductStorySection() {
                   </span>
                 </div>
                 <span className="rounded-md bg-sky-900/80 px-2 py-0.5 text-[10px] font-bold text-[#12BBDD] uppercase tracking-wider border border-sky-700/50">
-                  Interactive Demo
+                  {isHi ? 'इंटरैक्टिव डेमो' : 'Interactive Demo'}
                 </span>
               </div>
 
@@ -447,18 +461,22 @@ export function ProductStorySection() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-200/70 pb-3">
                       <div>
-                        <h4 className="text-sm font-bold text-[#101F33]">New Member Enrollment</h4>
-                        <p className="text-xs text-slate-500">Live test: Change plan or date to see expiry update</p>
+                        <h4 className="text-sm font-bold text-[#101F33]">
+                          {isHi ? 'नया सदस्य नामांकन' : 'New Member Enrollment'}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {isHi ? 'लाइव परीक्षण: समाप्ति तिथि देखने के लिए प्लान या तारीख बदलें' : 'Live test: Change plan or date to see expiry update'}
+                        </p>
                       </div>
                       <span className="text-[11px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
-                        Step 1 Form
+                        {isHi ? 'चरण 1 फॉर्म' : 'Step 1 Form'}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div>
                         <label htmlFor="memberName" className="block text-xs font-semibold text-slate-700 mb-1">
-                          Full Name
+                          {isHi ? 'पूरा नाम' : 'Full Name'}
                         </label>
                         <input
                           id="memberName"
@@ -466,14 +484,14 @@ export function ProductStorySection() {
                           type="text"
                           value={memberName}
                           onChange={(e) => setMemberName(e.target.value)}
-                          aria-label="Full Name"
+                          aria-label={isHi ? 'पूरा नाम' : 'Full Name'}
                           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#087FDB] focus:outline-hidden min-h-[44px]"
-                          placeholder="Member name"
+                          placeholder={isHi ? 'सदस्य का नाम' : 'Member name'}
                         />
                       </div>
                       <div>
                         <label htmlFor="memberPhone" className="block text-xs font-semibold text-slate-700 mb-1">
-                          Mobile Number
+                          {isHi ? 'मोबाइल नंबर' : 'Mobile Number'}
                         </label>
                         <input
                           id="memberPhone"
@@ -481,9 +499,9 @@ export function ProductStorySection() {
                           type="tel"
                           value={memberPhone}
                           onChange={(e) => setMemberPhone(e.target.value)}
-                          aria-label="Mobile Number"
+                          aria-label={isHi ? 'मोबाइल नंबर' : 'Mobile Number'}
                           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#087FDB] focus:outline-hidden min-h-[44px]"
-                          placeholder="10-digit number"
+                          placeholder={isHi ? '10-अंकों का नंबर' : '10-digit number'}
                         />
                       </div>
                     </div>
@@ -491,7 +509,7 @@ export function ProductStorySection() {
                     {/* Plan Selector Buttons */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Select Membership Pricing Plan
+                        {isHi ? 'मेंबरशिप प्लान चुनें' : 'Select Membership Pricing Plan'}
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
                         {DEMO_PLANS.map((plan) => {
@@ -524,7 +542,7 @@ export function ProductStorySection() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                       <div>
                         <label htmlFor="startDateInput" className="block text-xs font-semibold text-slate-700 mb-1">
-                          Joining Date
+                          {isHi ? 'शुरुआत की तारीख' : 'Joining Date'}
                         </label>
                         <input
                           id="startDateInput"
@@ -532,18 +550,18 @@ export function ProductStorySection() {
                           type="date"
                           value={startDate}
                           onChange={(e) => setStartDate(e.target.value)}
-                          aria-label="Joining Date"
+                          aria-label={isHi ? 'शुरुआत की तारीख' : 'Joining Date'}
                           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#087FDB] focus:outline-hidden min-h-[44px]"
                         />
                       </div>
                       <div>
                         <span className="block text-xs font-semibold text-slate-700 mb-1">
-                          Calculated Expiry Date
+                          {isHi ? 'स्वचालित समाप्ति तिथि' : 'Calculated Expiry Date'}
                         </span>
                         <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-xs font-bold text-emerald-800 min-h-[44px]">
                           <span>{calculatedExpiryDate}</span>
                           <span className="text-[10px] uppercase font-semibold text-emerald-700 bg-white px-1.5 py-0.5 rounded border border-emerald-200">
-                            Exact Month
+                            {isHi ? 'सटीक माह' : 'Exact Month'}
                           </span>
                         </div>
                       </div>
@@ -551,7 +569,9 @@ export function ProductStorySection() {
 
                     {/* Calculated Agreed Fee Display */}
                     <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs">
-                      <span className="text-slate-600 font-medium">Agreed Membership Fee:</span>
+                      <span className="text-slate-600 font-medium">
+                        {isHi ? 'तय की गई सदस्यता फीस:' : 'Agreed Membership Fee:'}
+                      </span>
                       <span className="text-base font-extrabold text-[#101F33]">
                         {formatCurrency(agreedPrice)}
                       </span>
@@ -565,19 +585,21 @@ export function ProductStorySection() {
                     <div className="flex items-center justify-between border-b border-slate-200/70 pb-3">
                       <div>
                         <h4 className="text-sm font-bold text-[#101F33]">
-                          Record Fee Collection — {memberName}
+                          {isHi ? `फीस भुगतान दर्ज करें — ${memberName}` : `Record Fee Collection — ${memberName}`}
                         </h4>
-                        <p className="text-xs text-slate-500">Plan: {currentPlan.name} • Agreed: {formatCurrency(agreedPrice)}</p>
+                        <p className="text-xs text-slate-500">
+                          {isHi ? `प्लान: ${currentPlan.name} • तय शुल्क: ${formatCurrency(agreedPrice)}` : `Plan: ${currentPlan.name} • Agreed: ${formatCurrency(agreedPrice)}`}
+                        </p>
                       </div>
                       <span className="text-[11px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
-                        Step 2 Ledger
+                        {isHi ? 'चरण 2 लेज़र' : 'Step 2 Ledger'}
                       </span>
                     </div>
 
                     {/* Payment Installment Options */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Amount Received by Gym Desk
+                        {isHi ? 'जिम काउंटर पर प्राप्त राशि' : 'Amount Received by Gym Desk'}
                       </label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button
@@ -589,7 +611,9 @@ export function ProductStorySection() {
                               : 'border-slate-200 bg-white hover:bg-slate-50'
                           }`}
                         >
-                          <span className="block text-xs font-bold text-slate-900">Full Payment</span>
+                          <span className="block text-xs font-bold text-slate-900">
+                            {isHi ? 'पूरा भुगतान' : 'Full Payment'}
+                          </span>
                           <span className="text-xs font-extrabold text-[#087FDB] block">
                             {formatCurrency(agreedPrice)}
                           </span>
@@ -604,7 +628,9 @@ export function ProductStorySection() {
                               : 'border-slate-200 bg-white hover:bg-slate-50'
                           }`}
                         >
-                          <span className="block text-xs font-bold text-slate-900">Partial Installment</span>
+                          <span className="block text-xs font-bold text-slate-900">
+                            {isHi ? 'आंशिक किस्त' : 'Partial Installment'}
+                          </span>
                           <span className="text-xs font-extrabold text-[#087FDB] block">
                             {formatCurrency(agreedPrice === 4500 ? 2500 : Math.round(agreedPrice * 0.55))}
                           </span>
@@ -619,7 +645,9 @@ export function ProductStorySection() {
                               : 'border-slate-200 bg-white hover:bg-slate-50'
                           }`}
                         >
-                          <span className="block text-xs font-bold text-slate-900">Unpaid / Due</span>
+                          <span className="block text-xs font-bold text-slate-900">
+                            {isHi ? 'बकाया / शून्य' : 'Unpaid / Due'}
+                          </span>
                           <span className="text-xs font-extrabold text-rose-600 block">₹0.00</span>
                         </button>
                       </div>
@@ -628,7 +656,7 @@ export function ProductStorySection() {
                     {/* Payment Mode Selector */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Payment Mode
+                        {isHi ? 'भुगतान का माध्यम' : 'Payment Mode'}
                       </label>
                       <div className="grid grid-cols-3 gap-2">
                         {(['upi', 'cash', 'card'] as const).map((mode) => {
@@ -644,7 +672,7 @@ export function ProductStorySection() {
                                   : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                               }`}
                             >
-                              {mode}
+                              {mode === 'upi' ? 'UPI' : mode === 'cash' ? (isHi ? 'कैश' : 'CASH') : (isHi ? 'कार्ड' : 'CARD')}
                             </button>
                           );
                         })}
@@ -655,7 +683,7 @@ export function ProductStorySection() {
                     {paymentMethod === 'upi' && (
                       <div>
                         <label htmlFor="storyTxnRef" className="block text-xs font-semibold text-slate-700 mb-1">
-                          UPI Transaction Ref (Optional)
+                          {isHi ? 'UPI ट्रांजेक्शन संदर्भ (वैकल्पिक)' : 'UPI Transaction Ref (Optional)'}
                         </label>
                         <input
                           id="storyTxnRef"
@@ -663,7 +691,7 @@ export function ProductStorySection() {
                           type="text"
                           value={txnRef}
                           onChange={(e) => setTxnRef(e.target.value)}
-                          aria-label="UPI Transaction Reference"
+                          aria-label={isHi ? 'UPI ट्रांजेक्शन संदर्भ (वैकल्पिक)' : 'UPI Transaction Ref (Optional)'}
                           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#087FDB] focus:outline-hidden min-h-[44px] font-mono"
                         />
                       </div>
@@ -672,15 +700,17 @@ export function ProductStorySection() {
                     {/* Real-time Mathematical Accounting Box */}
                     <div className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2">
                       <div className="flex items-center justify-between text-xs text-slate-600">
-                        <span>Agreed Package Price:</span>
+                        <span>{isHi ? 'तय किया गया पैकेज शुल्क:' : 'Agreed Package Price:'}</span>
                         <span className="font-semibold text-slate-800">{formatCurrency(agreedPrice)}</span>
                       </div>
                       <div className="flex items-center justify-between text-xs text-slate-600">
-                        <span>Total Collected Today:</span>
+                        <span>{isHi ? 'आज प्राप्त कुल राशि:' : 'Total Collected Today:'}</span>
                         <span className="font-bold text-emerald-700">{formatCurrency(amountPaid)}</span>
                       </div>
                       <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-900">Pending Balance Due:</span>
+                        <span className="font-bold text-slate-900">
+                          {isHi ? 'शेष बकाया राशि:' : 'Pending Balance Due:'}
+                        </span>
                         <span
                           className={`font-extrabold text-sm px-2 py-0.5 rounded ${
                             outstandingBalance > 0
@@ -700,21 +730,25 @@ export function ProductStorySection() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-200/70 pb-3">
                       <div>
-                        <h4 className="text-sm font-bold text-[#101F33]">Gym Member Dues & Renewals</h4>
-                        <p className="text-xs text-slate-500">Filter and audit active members and overdue fees</p>
+                        <h4 className="text-sm font-bold text-[#101F33]">
+                          {isHi ? 'जिम सदस्य बकाया और नवीनीकरण' : 'Gym Member Dues & Renewals'}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {isHi ? 'सक्रिय सदस्यों और लंबित शुल्क को तुरंत फ़िल्टर और ऑडिट करें' : 'Filter and audit active members and overdue fees'}
+                        </p>
                       </div>
                       <span className="text-[11px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
-                        Step 3 Table
+                        {isHi ? 'चरण 3 तालिका' : 'Step 3 Table'}
                       </span>
                     </div>
 
                     {/* Filter Tabs */}
                     <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100/90 rounded-xl text-xs">
                       {[
-                        { id: 'all', label: 'All Roster (3)' },
-                        { id: 'expiring', label: 'Expiring Soon (1)' },
-                        { id: 'dues', label: 'Pending Dues (1)' },
-                        { id: 'active', label: 'Fully Paid (1)' },
+                        { id: 'all', label: isHi ? 'सभी सदस्य (3)' : 'All Roster (3)' },
+                        { id: 'expiring', label: isHi ? 'जल्द समाप्त (1)' : 'Expiring Soon (1)' },
+                        { id: 'dues', label: isHi ? 'बकाया फीस (1)' : 'Pending Dues (1)' },
+                        { id: 'active', label: isHi ? 'पूर्ण भुगतान (1)' : 'Fully Paid (1)' },
                       ].map((tab) => (
                         <button
                           key={tab.id}
@@ -750,7 +784,7 @@ export function ProductStorySection() {
                                 <span className="text-[10px] text-slate-400 font-mono">{memberPhone}</span>
                               </div>
                               <p className="text-[11px] text-slate-500 mt-0.5">
-                                {currentPlan.name} • Exp: {calculatedExpiryDate}
+                                {currentPlan.name} • {isHi ? 'समाप्ति:' : 'Exp:'} {calculatedExpiryDate}
                               </p>
                             </div>
                             <span
@@ -760,7 +794,9 @@ export function ProductStorySection() {
                                   : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               }`}
                             >
-                              {outstandingBalance > 0 ? `Due: ${formatCurrency(outstandingBalance)}` : 'Cleared'}
+                              {outstandingBalance > 0
+                                ? (isHi ? `बकाया: ${formatCurrency(outstandingBalance)}` : `Due: ${formatCurrency(outstandingBalance)}`)
+                                : (isHi ? 'पूर्ण चुकता' : 'Cleared')}
                             </span>
                           </div>
                         </div>
@@ -783,11 +819,11 @@ export function ProductStorySection() {
                                 <span className="text-[10px] text-slate-400 font-mono">98111 23456</span>
                               </div>
                               <p className="text-[11px] text-amber-700 font-medium mt-0.5">
-                                1 Month Standard • Expires in 6 days (24 Oct)
+                                {isHi ? '1 माह स्टैंडर्ड • 6 दिनों में समाप्त (24 अक्टूबर)' : '1 Month Standard • Expires in 6 days (24 Oct)'}
                               </p>
                             </div>
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                              Expiring Soon
+                              {isHi ? 'जल्द समाप्त' : 'Expiring Soon'}
                             </span>
                           </div>
                         </div>
@@ -810,11 +846,11 @@ export function ProductStorySection() {
                                 <span className="text-[10px] text-slate-400 font-mono">98765 43210</span>
                               </div>
                               <p className="text-[11px] text-slate-500 mt-0.5">
-                                6 Months Fitness • Exp: 18 Apr 2027
+                                {isHi ? '6 माह फिटनेस • समाप्ति: 18 अप्रैल 2027' : '6 Months Fitness • Exp: 18 Apr 2027'}
                               </p>
                             </div>
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Active • Paid
+                              {isHi ? 'सक्रिय • चुकता' : 'Active • Paid'}
                             </span>
                           </div>
                         </div>
@@ -828,11 +864,15 @@ export function ProductStorySection() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-200/70 pb-3">
                       <div>
-                        <h4 className="text-sm font-bold text-[#101F33]">Generated Fee Receipt</h4>
-                        <p className="text-xs text-slate-500">Official voucher based on recorded payment</p>
+                        <h4 className="text-sm font-bold text-[#101F33]">
+                          {isHi ? 'आधिकारिक रसीद वाउचर' : 'Official Receipt Voucher'}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {isHi ? 'दर्ज किए गए भुगतान पर आधारित आधिकारिक वाउचर' : 'Official voucher based on recorded payment'}
+                        </p>
                       </div>
                       <span className="text-[11px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
-                        Step 4 Voucher
+                        {isHi ? 'चरण 4 वाउचर' : 'Step 4 Voucher'}
                       </span>
                     </div>
 
@@ -840,33 +880,44 @@ export function ProductStorySection() {
                     <div className="rounded-xl border border-slate-300 bg-white p-4 shadow-sm space-y-3 font-sans">
                       {/* Receipt Header */}
                       <div className="border-b border-dashed border-slate-200 pb-3 text-center space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#087FDB] block">
+                          {isHi ? 'आधिकारिक रसीद वाउचर' : 'Official Receipt Voucher'}
+                        </span>
                         <h5 className="font-black text-sm text-[#101F33] tracking-wide uppercase">
                           Olympic Fitness Club
                         </h5>
                         <p className="text-[11px] text-slate-500">Sector 14 Market, Gurugram • Phone: 98765 43210</p>
-                        <p className="text-[10px] font-mono text-slate-400">RECEIPT NO: REC-DEMO-8812 • DATE: {startDate}</p>
+                        <p className="text-[10px] font-mono text-slate-400">
+                          {isHi ? 'रसीद संख्या' : 'RECEIPT NO'}: REC-DEMO-8812 • {isHi ? 'तारीख' : 'DATE'}: {startDate}
+                        </p>
                       </div>
 
                       {/* Receipt Member & Plan Breakdown */}
                       <div className="space-y-1.5 text-xs">
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Member Name:</span>
+                          <span className="text-slate-500">{isHi ? 'सदस्य आईडी:' : 'Member ID:'}</span>
+                          <span className="font-mono text-slate-700">MEM-8812</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">{isHi ? 'सदस्य का नाम:' : 'Member Name:'}</span>
                           <span className="font-bold text-slate-900">{memberName}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Phone:</span>
+                          <span className="text-slate-500">{isHi ? 'मोबाइल नंबर:' : 'Phone:'}</span>
                           <span className="font-mono text-slate-700">{memberPhone}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Enrolled Plan:</span>
+                          <span className="text-slate-500">{isHi ? 'प्लान का नाम:' : 'Plan Name:'}</span>
                           <span className="font-semibold text-slate-800">{currentPlan.name}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Valid Period:</span>
-                          <span className="font-medium text-slate-700">{startDate} to {calculatedExpiryDate}</span>
+                          <span className="text-slate-500">{isHi ? 'वैधता अवधि:' : 'Valid Period:'}</span>
+                          <span className="font-medium text-slate-700">
+                            {startDate} {isHi ? 'से' : 'to'} {calculatedExpiryDate}
+                          </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Payment Mode:</span>
+                          <span className="text-slate-500">{isHi ? 'भुगतान का माध्यम:' : 'Payment Mode:'}</span>
                           <span className="font-bold uppercase text-sky-700">{paymentMethod}</span>
                         </div>
                       </div>
@@ -874,15 +925,15 @@ export function ProductStorySection() {
                       {/* Totals & Balance Due */}
                       <div className="border-t border-dashed border-slate-200 pt-3 space-y-1.5 text-xs">
                         <div className="flex justify-between">
-                          <span className="text-slate-600">Total Agreed Price:</span>
+                          <span className="text-slate-600">{isHi ? 'कुल पैकेज:' : 'Total Package:'}</span>
                           <span className="font-semibold text-slate-800">{formatCurrency(agreedPrice)}</span>
                         </div>
                         <div className="flex justify-between text-emerald-700 font-bold">
-                          <span>Amount Paid (Received):</span>
+                          <span>{isHi ? 'प्राप्त राशि:' : 'Amount Received:'}</span>
                           <span>{formatCurrency(amountPaid)}</span>
                         </div>
                         <div className="flex justify-between pt-1 border-t border-slate-100 font-extrabold text-slate-900">
-                          <span>Balance Remaining:</span>
+                          <span>{isHi ? 'बकाया राशि:' : 'Balance Due:'}</span>
                           <span className={outstandingBalance > 0 ? 'text-rose-600' : 'text-emerald-700'}>
                             {formatCurrency(outstandingBalance)}
                           </span>
@@ -898,7 +949,7 @@ export function ProductStorySection() {
                         className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#087FDB] px-3 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#0669b6] active:bg-[#055393] transition-all cursor-pointer min-h-[44px] tap-feedback"
                       >
                         <Download className="h-3.5 w-3.5" />
-                        <span>{downloadSuccess ? 'Downloaded!' : 'Download PDF'}</span>
+                        <span>{downloadSuccess ? (isHi ? 'डाउनलोड हो गया!' : 'Downloaded!') : (isHi ? 'PDF डाउनलोड करें' : 'Download PDF')}</span>
                       </button>
 
                       <button
@@ -907,7 +958,7 @@ export function ProductStorySection() {
                         className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer min-h-[44px] tap-feedback"
                       >
                         <Printer className="h-3.5 w-3.5 text-slate-500" />
-                        <span>Print Voucher</span>
+                        <span>{isHi ? 'वाउचर प्रिंट करें' : 'Print Voucher'}</span>
                       </button>
 
                       <button
@@ -916,7 +967,7 @@ export function ProductStorySection() {
                         className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-all cursor-pointer min-h-[44px] tap-feedback"
                       >
                         {copiedSlip ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-emerald-600" />}
-                        <span>{copiedSlip ? 'Copied Slip!' : 'WhatsApp Slip'}</span>
+                        <span>{copiedSlip ? (isHi ? 'स्लिप कॉपी हो गई!' : 'Copied Slip!') : (isHi ? 'व्हाट्सएप स्लिप' : 'WhatsApp Slip')}</span>
                       </button>
                     </div>
                   </div>
@@ -925,9 +976,11 @@ export function ProductStorySection() {
 
               {/* Viewport Footer */}
               <div className="bg-[#101F33] px-4 py-2.5 border-t border-slate-800 text-[11px] text-slate-300 flex items-center justify-between">
-                <span>Interactive sandbox • Real client state only (no DB writes)</span>
+                <span>
+                  {isHi ? 'इंटरैक्टिव सैंडबॉक्स • केवल वास्तविक क्लाइंट स्थिति (कोई DB प्रविष्टि नहीं)' : 'Interactive sandbox • Real client state only (no DB writes)'}
+                </span>
                 <span className="font-bold text-[#12BBDD]">
-                  Step {activeStep === 'register' ? '1' : activeStep === 'payment' ? '2' : activeStep === 'dues' ? '3' : '4'} of 4
+                  {isHi ? 'चरण' : 'Step'} {activeStep === 'register' ? '1' : activeStep === 'payment' ? '2' : activeStep === 'dues' ? '3' : '4'} {isHi ? 'का' : 'of'} 4
                 </span>
               </div>
             </div>

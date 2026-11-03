@@ -46,11 +46,13 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-slate-900">2. Free Trial & Subscriptions</h2>
+            <h2 className="text-lg font-bold text-slate-900">2. Early Access & Subscriptions</h2>
             <p className="text-sm text-slate-600 leading-relaxed">
-              New gym accounts receive a 30-day unrestricted free trial with access to all core features. No credit
-              card is required at signup. At the end of the trial period, accounts may subscribe to continue adding
-              new members. In all cases, existing records remain exportable under our no-hostage-data principle.
+              New gym accounts receive full, unrestricted early access to all core features. No credit
+              card is required at signup. When transparent pricing is introduced in the future once our
+              active user base matures, existing partner gyms will receive clear advance notice. In all
+              cases, your member database and transaction history remain 100% your property and are always
+              exportable under our permanent no-hostage-data principle.
             </p>
           </section>
 

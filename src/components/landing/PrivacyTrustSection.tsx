@@ -39,8 +39,8 @@ const PILLARS_EN: Pillar[] = [
   },
   {
     icon: Database,
-    colorClass: 'text-purple-600',
-    iconBgClass: 'bg-purple-100',
+    colorClass: 'text-[#087FDB]',
+    iconBgClass: 'bg-sky-50 border border-sky-100',
     title: 'Structured JSON Backup',
     description: "Export a complete, structured JSON backup of your gym's plans, members, and transactions directly from your settings whenever you need independent offline archives.",
     tag: 'Available on-demand',
@@ -74,8 +74,8 @@ const PILLARS_HI: Pillar[] = [
   },
   {
     icon: Database,
-    colorClass: 'text-purple-600',
-    iconBgClass: 'bg-purple-100',
+    colorClass: 'text-[#087FDB]',
+    iconBgClass: 'bg-sky-50 border border-sky-100',
     title: 'संरचित JSON बैकअप',
     description: 'जब भी आपको स्वतंत्र ऑफ़लाइन संग्रह की आवश्यकता हो, अपनी सेटिंग्स से सीधे अपने जिम के प्लान्स, सदस्यों और लेन-देन का एक पूर्ण, संरचित JSON बैकअप निर्यात करें।',
     tag: 'मांग पर उपलब्ध',

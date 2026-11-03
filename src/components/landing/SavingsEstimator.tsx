@@ -43,7 +43,7 @@ export function SavingsEstimator() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+          <span className="text-xs font-bold uppercase tracking-widest text-[#087FDB] bg-sky-50 px-3 py-1 rounded-full border border-sky-100">
             {isHi ? 'इंटरैक्टिव कैलकुलेटर' : 'Interactive Calculator'}
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
@@ -166,7 +166,7 @@ export function SavingsEstimator() {
                   <button
                     type="button"
                     onClick={() => setLookupsPerDay(Math.max(1, lookupsPerDay - 1))}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 cursor-pointer tap-feedback"
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 cursor-pointer tap-feedback"
                     aria-label="Decrease lookups"
                   >
                     <Minus className="h-4 w-4" />
@@ -180,12 +180,12 @@ export function SavingsEstimator() {
                     value={lookupsPerDay}
                     aria-label="Manual Record Lookups per Day"
                     onChange={(e) => handleLookupsChange(Number(e.target.value))}
-                    className="w-16 rounded-lg border border-slate-300 px-2 py-2 text-sm font-bold text-slate-800 text-center focus:border-sky-500 focus:outline-none min-h-[40px]"
+                    className="w-16 rounded-lg border border-slate-300 px-2 py-2 text-sm font-bold text-slate-800 text-center focus:border-sky-500 focus:outline-none min-h-[44px]"
                   />
                   <button
                     type="button"
                     onClick={() => setLookupsPerDay(Math.min(100, lookupsPerDay + 1))}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 cursor-pointer tap-feedback"
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 cursor-pointer tap-feedback"
                     aria-label="Increase lookups"
                   >
                     <Plus className="h-4 w-4" />

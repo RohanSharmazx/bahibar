@@ -271,7 +271,7 @@ export function ReceiptModal({ receipt, isOpen, onClose }: ReceiptModalProps) {
               href={whatsAppUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg transition-colors shadow-xs min-h-[36px]"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg transition-colors shadow-xs min-h-[44px]"
             >
               <MessageCircle className="h-3.5 w-3.5" />
               {t.receiptModal.whatsAppSlip}
@@ -279,7 +279,7 @@ export function ReceiptModal({ receipt, isOpen, onClose }: ReceiptModalProps) {
 
             <a
               href={emailUrl}
-              className="inline-flex items-center gap-1.5 text-xs font-medium bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg transition-colors min-h-[36px]"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-3.5 py-2 rounded-lg transition-colors min-h-[44px]"
             >
               <Mail className="h-3.5 w-3.5 text-slate-500" />
               Email Receipt
@@ -288,7 +288,7 @@ export function ReceiptModal({ receipt, isOpen, onClose }: ReceiptModalProps) {
             <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 text-xs font-medium bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg transition-colors cursor-pointer min-h-[36px]"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-3.5 py-2 rounded-lg transition-colors cursor-pointer min-h-[44px]"
               title="Print receipt voucher"
             >
               <Printer className="h-3.5 w-3.5 text-slate-500" />
@@ -298,7 +298,7 @@ export function ReceiptModal({ receipt, isOpen, onClose }: ReceiptModalProps) {
             <button
               type="button"
               onClick={handleCopyText}
-              className="inline-flex items-center gap-1.5 text-xs font-medium bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg transition-colors cursor-pointer min-h-[36px]"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-3.5 py-2 rounded-lg transition-colors cursor-pointer min-h-[44px]"
             >
               {copied ? (
                 <>
