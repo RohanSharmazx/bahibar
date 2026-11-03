@@ -249,7 +249,7 @@ export function PaperProblemSection() {
         </div>
 
         {/* Micro-Interaction Comparison Card */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+        <div key={activeTab} className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch animate-stage-fade">
           {/* Paper Side */}
           <div className="rounded-2xl border border-rose-200 bg-rose-50/20 p-6 sm:p-7 flex flex-col justify-between">
             <div className="space-y-4">

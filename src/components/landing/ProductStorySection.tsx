@@ -245,7 +245,7 @@ export function ProductStorySection() {
         {/* Main Interactive Stage (2-Column Desktop, Stacked Mobile) */}
         <div className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Context & Narrative Explanation */}
-          <div className="lg:col-span-5 space-y-6">
+          <div key={activeStep} className="lg:col-span-5 space-y-6 animate-stage-fade">
             {activeStep === 'register' && (
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 text-xs font-bold text-[#087FDB] uppercase tracking-wider">
