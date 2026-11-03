@@ -170,6 +170,8 @@ export function initAnalytics(): void {
       window.posthog.init(POSTHOG_KEY, {
         api_host: rawHost,
         capture_pageview: false, // Explicitly manual for Next.js App Router
+        capture_pageleave: true, // Enables automatic $pageleave on window unload/visibility change
+        capture_performance: true, // Captures Core Web Vitals ($web_vitals: LCP, FID/INP, CLS)
         autocapture: false, // Strict privacy: do not capture DOM elements or forms
         disable_session_recording: true, // Strict privacy: no screen recording
         persistence: 'localStorage+cookie',

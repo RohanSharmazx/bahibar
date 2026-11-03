@@ -18,7 +18,7 @@ function PostHogRouteTracker() {
     initAnalytics();
   }, []);
 
-  // Track pageviews on route change without double-counting
+  // Track pageviews on route change without double-counting, and send $pageleave on route departure
   React.useEffect(() => {
     if (!pathname) return;
 
@@ -27,6 +27,13 @@ function PostHogRouteTracker() {
       lastTrackedRef.current = pathname;
       trackPageView(pathname);
     }
+
+    return () => {
+      // Capture $pageleave on SPA route departure to ensure session duration & bounce rates stay accurate
+      if (typeof window !== 'undefined' && window.posthog?.capture) {
+        window.posthog.capture('$pageleave');
+      }
+    };
   }, [pathname, searchParams]);
 
   return null;
